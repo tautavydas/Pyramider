@@ -1,0 +1,11 @@
+.vscode
+Experts/Advisors/
+Experts/Examples/
+Experts/*.ex5
+Images
+Include
+Indicators
+Logs
+Profiles
+Scripts
+experts.dat
