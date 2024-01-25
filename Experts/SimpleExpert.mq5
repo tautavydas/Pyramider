@@ -22,21 +22,21 @@ input uint NotionalRatioDigits = 2;
 };*/
 
 class CProportionsManager final {
-  public:
+   public:
     uint button_width_pixels, button_height_pixels, start_pixel;
 
     void UpdateProportions() {
         long const Height{ChartGetInteger(ChartID(), CHART_HEIGHT_IN_PIXELS)};
         long const Width{ChartGetInteger(ChartID(), CHART_WIDTH_IN_PIXELS)};
-        button_width_pixels  = uint(round(Xproportions * Width));
+        button_width_pixels = uint(round(Xproportions * Width));
         button_height_pixels = uint(round(Yproportions * Height));
-        start_pixel          = uint(round((Width - ListPeriods.Size() * button_width_pixels) / 2));
+        start_pixel = uint(round((Width - ListPeriods.Size() * button_width_pixels) / 2));
     }
 
 } ProportionsManager;
 
 double const Contract{SymbolInfoDouble(Symbol(), SYMBOL_TRADE_CONTRACT_SIZE)}, const MarginCall{AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL) / 100};
-long const   Leverage{AccountInfoInteger(ACCOUNT_LEVERAGE)};
+long const Leverage{AccountInfoInteger(ACCOUNT_LEVERAGE)};
 
 struct CVolumes final {
     double const VolumeMin, const VolumeMax, const VolumeStep, const VolumeLimit;
@@ -57,11 +57,11 @@ double ForwardConvert(double const quote1, double const quote2) { return quote1 
 double BackwardConvert(double const quote1, double const quote2) { return quote1 / quote2; }
 
 class CSubConverter final {
-  private:
-    string const     Pair;
+   private:
+    string const Pair;
     PtrConvert const Forward, const Backward;
 
-  public:
+   public:
     CSubConverter() : Pair(""), Forward(NoConvert), Backward(NoConvert) {}
     CSubConverter(string const pair) : Pair(pair), Forward(ForwardConvert), Backward(BackwardConvert) {}
 
@@ -75,10 +75,10 @@ class CSubConverter final {
 };
 
 class CConverter final {
-  private:
+   private:
     CSubConverter const *const Arbiter, const *const Deposit;
 
-  public:
+   public:
     CConverter(string const quote, string const middle, string const account)
         : Arbiter(quote == middle ? new CSubConverter : new CSubConverter(quote + middle)),
           Deposit(account == middle ? new CSubConverter : new CSubConverter(account + middle)) {
@@ -111,10 +111,10 @@ double Add(double const op1, double const op2) { return op1 + op2; }
 double Sub(double const op1, double const op2) { return op1 - op2; }
 
 class Parameters {
-  protected:
+   protected:
     uint const coefX, const coefY, const coefW, const coefH;
 
-  public:
+   public:
     Parameters(uint const coefX_, uint const coefY_, uint const coefW_, uint const coefH_)
         : coefX(coefX_), coefY(coefY_), coefW(coefW_), coefH(coefH_) {}
     Parameters(uint const coefX_, ENUM_POSITION_TYPE const position_type, uint const coefW_, uint const coefH_)
@@ -129,51 +129,53 @@ class Parameters {
         ObjectSetInteger(ChartID(), name, OBJPROP_YSIZE, size_y);
     }
 
-  private:
+   private:
     uint SizeX() const { return ProportionsManager.button_width_pixels * coefW; }
     uint SizeY() const { return ProportionsManager.button_height_pixels / coefH; }
     uint CoordinateX() const { return ProportionsManager.button_width_pixels * coefX; }
 
-  protected:
+   protected:
     uint virtual CoordinateY() const { return ProportionsManager.button_height_pixels * coefY; }
 };
 
 class ParametersStandard : public Parameters {
-  public:
+   public:
     OperationPtr const Operation;
     ParametersStandard(uint const coefX_, ENUM_POSITION_TYPE const position_type, uint const coefW_, uint const coefH_)
         : Parameters(coefX_, position_type, coefW_, coefH_), Operation(Add) {}
 };
 
 class ParametersShifted final : public Parameters {
-  public:
+   public:
     OperationPtr const Operation;
     ParametersShifted(uint const coefX_, ENUM_POSITION_TYPE const position_type, uint const coefW_, uint const coefH_)
         : Parameters(coefX_, position_type, coefW_, coefH_), Operation(Sub) {}
 
-  private:
+   private:
     uint CoordinateY() const override { return Parameters::CoordinateY() + ProportionsManager.button_height_pixels / 2; }
 };
 
 class DrawableObject {
-  public:
+   public:
     string const name;
 
-  protected:
+   protected:
     ENUM_OBJECT const object;
-    string const      tooltip;
-    color const       object_color, const background_color;
+    string const tooltip;
+    color const object_color, const background_color;
 
     DrawableObject(ENUM_OBJECT const object_, string const name_, string const tooltip_, color const object_color_, color const background_color_)
         : object(object_),
-          name(name_), tooltip(tooltip_),
-          object_color(object_color_), background_color(background_color_) {}
+          name(name_),
+          tooltip(tooltip_),
+          object_color(object_color_),
+          background_color(background_color_) {}
 
     ~DrawableObject() {
         Hide();
     }
 
-  public:
+   public:
     virtual void Draw() = 0;
 
     void Hide() const {
@@ -192,12 +194,12 @@ void DrawableObject::Draw() {
     ObjectSetString(ChartID(), name, OBJPROP_TOOLTIP, tooltip);
 }
 
-template<typename TParameters>
+template <typename TParameters>
 class StateObject : public DrawableObject {
     string const text;
-    color const  border_color;
+    color const border_color;
 
-  public:
+   public:
     TParameters const *const Parameters;
     StateObject(string const name_, string const tooltip_, string const text_, TParameters const *const parameters)
         : DrawableObject(OBJ_BUTTON, name_, tooltip_, clrBlack, clrWhiteSmoke),
@@ -207,7 +209,7 @@ class StateObject : public DrawableObject {
 
     ~StateObject() { delete Parameters; }
 
-  public:
+   public:
     void Draw() {
         DrawableObject::Draw();
         ObjectSetString(ChartID(), name, OBJPROP_TEXT, text);
@@ -220,19 +222,19 @@ class StateObject : public DrawableObject {
 };
 
 class DrawButton final : public StateObject<Parameters> {
-  public:
+   public:
     class Pair final {
-      public:
+       public:
         double price, volume;
         Pair(double const price_, double const volume_)
             : price(price_), volume(volume_) {}
     } *Levels[];
 
     string const line_tooltip;
-    color const  colour;
-    uint const   digits;
+    color const colour;
+    uint const digits;
 
-  public:
+   public:
     uint counter;
     DrawButton(uint const coefX, ENUM_POSITION_TYPE const position_type, string const action, uint const digits_)
         : StateObject((position_type == POSITION_TYPE_BUY ? "Long" : "Short") + action,
@@ -259,12 +261,12 @@ class DrawButton final : public StateObject<Parameters> {
     uint SizeCounter() { return counter; }
 
     void Push(double const price, double const volume) {
-        if(counter < Levels.Size()) {
-            Levels[counter].price  = price;
+        if (counter < Levels.Size()) {
+            Levels[counter].price = price;
             Levels[counter].volume = volume;
             ++counter;
         } else {
-            if(Levels.Push(new Pair(price, volume)))
+            if (Levels.Push(new Pair(price, volume)))
                 ++counter;
             else {
                 PrintFormat("%s WTF", __FUNCTION__);
@@ -277,14 +279,14 @@ class DrawButton final : public StateObject<Parameters> {
     }
 
     void DeleteLevels() {
-        for(uint i{0}; i < Levels.Size(); ++i) {
+        for (uint i{0}; i < Levels.Size(); ++i) {
             delete Levels[i];
         }
     }
 
     void DrawLines() {
         uint cnt{0};
-        for(; cnt < counter; ++cnt) {
+        for (; cnt < counter; ++cnt) {
             DrawLine(cnt);
         }
         DeleteExcessLines(cnt);
@@ -292,7 +294,7 @@ class DrawButton final : public StateObject<Parameters> {
 
     void DeleteLines() {
         uint cnt{0};
-        for(; cnt < counter; ++cnt) {
+        for (; cnt < counter; ++cnt) {
             // DeleteLine(cnt);
             ObjectDelete(ChartID(), Name(cnt));
         }
@@ -316,7 +318,7 @@ class DrawButton final : public StateObject<Parameters> {
         return StringFormat("%s %u", name, cnt);
     }
 
-  private:
+   private:
     void DrawLine(uint const cnt) {
         string const deal_name{Name(cnt)};
         ObjectCreate(ChartID(), deal_name, OBJ_HLINE, 0, 0, Levels[cnt].price);
@@ -338,8 +340,8 @@ class DrawButton final : public StateObject<Parameters> {
     }*/
 
     void DeleteExcessLines(uint cnt) {
-        if(counter < Levels.Size()) {
-            for(; cnt < Levels.Size(); ++cnt) {
+        if (counter < Levels.Size()) {
+            for (; cnt < Levels.Size(); ++cnt) {
                 // DeleteLine(cnt);
                 ObjectDelete(ChartID(), Name(cnt));
             }
@@ -347,8 +349,8 @@ class DrawButton final : public StateObject<Parameters> {
     }
 
     void DeleteExcessLevels(uint cnt) {
-        if(counter < Levels.Size()) {
-            for(; cnt < Levels.Size(); ++cnt) {
+        if (counter < Levels.Size()) {
+            for (; cnt < Levels.Size(); ++cnt) {
                 delete Levels[cnt];
             }
             ArrayResize(Levels, counter);
@@ -357,7 +359,7 @@ class DrawButton final : public StateObject<Parameters> {
 };
 
 class PeriodButton : public StateObject<Parameters> {
-  public:
+   public:
     PeriodButton(ENUM_TIMEFRAMES const &periods[], uint const coefX)
         : StateObject(EnumToString(periods[coefX]),
                       EnumToString(periods[coefX]),
@@ -366,7 +368,7 @@ class PeriodButton : public StateObject<Parameters> {
 };
 
 class ActionButton : public StateObject<Parameters> {
-  public:
+   public:
     ActionButton(uint const coefX, ENUM_POSITION_TYPE const position_type, string const action)
         : StateObject((position_type == POSITION_TYPE_BUY ? "Long" : "Short") + action,
                       position_type == POSITION_TYPE_BUY ? "Buy" : "Sell",
@@ -376,9 +378,9 @@ class ActionButton : public StateObject<Parameters> {
     // void UpdatePrice() const {/*PrintFormat("%s yo", __FUNCTION__);*//*Edit.SetValue();*/}
 };
 
-template<typename TParams>
+template <typename TParams>
 class ChangeButton final : public StateObject<TParams> {
-  public:
+   public:
     ChangeButton(uint const coefX, ENUM_POSITION_TYPE const position_type, string const name_)
         : StateObject(name_ + (typename(TParams) == typename(ParametersStandard) ? "Up" : "Down"),
                       typename(TParams) == typename(ParametersStandard) ? "Increase" : "Decrease",
@@ -388,28 +390,28 @@ class ChangeButton final : public StateObject<TParams> {
 };
 
 class CListPeriods final {
-  public:
+   public:
     class CPair final {
-      public:
-        ENUM_TIMEFRAMES const     Timeframe;
+       public:
+        ENUM_TIMEFRAMES const Timeframe;
         PeriodButton const *const Button;
         CPair(ENUM_TIMEFRAMES const timeframe, PeriodButton const &button)
             : Timeframe(timeframe), Button(&button) {
         }
     };
 
-  private:
+   private:
     ENUM_TIMEFRAMES Periods[];
     PeriodButton *Buttons[], const *Button;
     CHashMap<string, CPair *> *const Map;
 
-  public:
+   public:
     CListPeriods()
         : Map(new CHashMap<string, CPair *>) {
         ENUM_TIMEFRAMES const periods[]{PERIOD_M1, PERIOD_M2, PERIOD_M3, PERIOD_M4, PERIOD_M5, PERIOD_M6, PERIOD_M10, PERIOD_M12, PERIOD_M15, PERIOD_M20, PERIOD_M30, PERIOD_H1, PERIOD_H2, PERIOD_H3, PERIOD_H4, PERIOD_H6, PERIOD_H8, PERIOD_H12, PERIOD_D1, PERIOD_W1, PERIOD_MN1};
 
         ArrayResize(Buttons, ArrayCopy(Periods, periods));
-        for(uint i{0}; i < Buttons.Size(); ++i) {
+        for (uint i{0}; i < Buttons.Size(); ++i) {
             Buttons[i] = new PeriodButton(Periods, i);
             Map.Add(Buttons[i].name, new CPair(Periods[i], Buttons[i]));
         }
@@ -420,7 +422,7 @@ class CListPeriods final {
     ~CListPeriods() {
         CKeyValuePair<string, CPair *> *Pairs[];
         Map.CopyTo(Pairs);
-        for(uint i{0}; i < Pairs.Size(); ++i) {
+        for (uint i{0}; i < Pairs.Size(); ++i) {
             delete Buttons[i];
             delete Pairs[i].Value();
             delete Pairs[i];
@@ -431,9 +433,9 @@ class CListPeriods final {
     uint Size() const { return Buttons.Size(); }
 
     void Draw() {
-        for(uint i{0}; i < Buttons.Size(); ++i) {
+        for (uint i{0}; i < Buttons.Size(); ++i) {
             Buttons[i].Draw();
-            if(Period() == Periods[i]) {
+            if (Period() == Periods[i]) {
                 Button = Buttons[i];
                 Button.Set();
             }
@@ -442,7 +444,7 @@ class CListPeriods final {
 
     void UpdateButton() {
         CPair *Pair;
-        if(Map.TryGetValue(EnumToString(ENUM_TIMEFRAMES(Period())), Pair)) {
+        if (Map.TryGetValue(EnumToString(ENUM_TIMEFRAMES(Period())), Pair)) {
             Button.Unset();
             Button = Pair.Button;
             Button.Set();
@@ -451,8 +453,8 @@ class CListPeriods final {
 
     void ChangePeriod(string const &sparam) {
         CPair *Pair;
-        if(Map.TryGetValue(sparam, Pair)) {
-            if(Button != Pair.Button) {
+        if (Map.TryGetValue(sparam, Pair)) {
+            if (Button != Pair.Button) {
                 ChartSetSymbolPeriod(ChartID(), Symbol(), Pair.Timeframe);
             }
             Button.Unset();
@@ -463,28 +465,28 @@ class CListPeriods final {
 } ListPeriods;
 
 class IFunction {
-  public:
-    virtual double Init() const                 = 0;
+   public:
+    virtual double Init() const = 0;
     virtual double onButton(double const) const = 0;
-    virtual double onTick(double const) const   = 0;
+    virtual double onTick(double const) const = 0;
 };
 
 class ExtremumMin final {
-  public:
+   public:
     double process(double const val1, double const val2) const { return fmin(val1, val2); }
 };
 
 class ExtremumMax final {
-  public:
+   public:
     double process(double const val1, double const val2) const { return fmax(val1, val2); }
 };
 
-template<typename TMinMax>
+template <typename TMinMax>
 class ClampPrice final : public IFunction {
     TMinMax const MinMax;
-    double const  PriceRatio;
+    double const PriceRatio;
 
-  public:
+   public:
     ENUM_SYMBOL_INFO_DOUBLE const QuoteIn;
     ClampPrice(ENUM_POSITION_TYPE const position_type, double const price_ratio)
         : PriceRatio(price_ratio),
@@ -506,7 +508,7 @@ class ClampPrice final : public IFunction {
 class ClampPriceRatio final : public IFunction {
     double const default_value, const lower_boundary, const higher_boundary;
 
-  public:
+   public:
     ClampPriceRatio(ENUM_POSITION_TYPE const position_type, double const default_value_)
         : default_value(default_value_),
           lower_boundary(position_type == POSITION_TYPE_BUY ? 0 : 1),
@@ -518,7 +520,7 @@ class ClampPriceRatio final : public IFunction {
 };
 
 class ClampVolumeInit final : public IFunction {
-  public:
+   public:
     ClampVolumeInit() {}
 
     double Init() const override { return onButton(PositionReporter.getAvgVolume()); }
@@ -529,7 +531,7 @@ class ClampVolumeInit final : public IFunction {
 class ClampValue final : public IFunction {
     double const init_value, const lower_boundary, const higher_boundary;
 
-  public:
+   public:
     ClampValue(double const init_value_, double const lower_boundary_, double const higher_boundary_)
         : init_value(init_value_),
           lower_boundary(lower_boundary_),
@@ -540,15 +542,15 @@ class ClampValue final : public IFunction {
     double onButton(double const val) const override { return fmax(lower_boundary, fmin(higher_boundary, val)); }
 };
 
-template<typename T>
+template <typename T>
 class ClampRestricted final : public IFunction {
     // double const init_value, const lower_boundary;
     CObject<T> const *const Parent;
 
-  public:
+   public:
     ClampRestricted(CObject<T> const &parent)
-        :   // init_value(0),
-            // lower_boundary(0),
+        :  // init_value(0),
+           // lower_boundary(0),
           Parent(&parent) {}
 
     double Init() const override { return onButton(0); }
@@ -557,16 +559,16 @@ class ClampRestricted final : public IFunction {
 };
 
 class CEdit final : public DrawableObject {
-    color const  border_color;
+    color const border_color;
     double const step;
-    bool         BoolInit;
+    bool BoolInit;
 
-  public:
-    IFunction const *const                  Function;
-    Parameters const *const                 Params;
+   public:
+    IFunction const *const Function;
+    Parameters const *const Params;
     ChangeButton<ParametersStandard> *const ValueUp;
-    ChangeButton<ParametersShifted> *const  ValueDown;
-    uint const                              digits;
+    ChangeButton<ParametersShifted> *const ValueDown;
+    uint const digits;
     CEdit(IFunction const *const function, uint const coefX, ENUM_POSITION_TYPE const position_type, string const name_, double const digits_)
         : DrawableObject(OBJ_EDIT, (position_type == POSITION_TYPE_BUY ? "Long" : "Short") + name_, name_, position_type == POSITION_TYPE_BUY ? clrBlue : clrRed, clrLightGray),
           border_color(clrGray),
@@ -591,7 +593,7 @@ class CEdit final : public DrawableObject {
         ValueUp.Draw();
         ValueDown.Draw();
         Params.DrawParameters(name);
-        if(BoolInit) {
+        if (BoolInit) {
             setText(Function.Init());
             BoolInit = false;
         }
@@ -605,23 +607,23 @@ class CEdit final : public DrawableObject {
     }
 
     double getValue() const { return StringToDouble(ObjectGetString(ChartID(), name, OBJPROP_TEXT)); }
-    void   editValue() const { setText(Function.onButton(getValue())); }
-    void   changeValue(OperationPtr const &Operation) const { setText(Function.onButton(Operation(getValue(), step))); }
+    void editValue() const { setText(Function.onButton(getValue())); }
+    void changeValue(OperationPtr const &Operation) const { setText(Function.onButton(Operation(getValue(), step))); }
 
-  private:
+   private:
     void setValue() const { setText(Function.onTick(getValue())); }
     void setText(double const display_value) const { ObjectSetString(ChartID(), name, OBJPROP_TEXT, StringFormat("%.*f", digits, display_value)); }
 };
 
-template<typename TMinMax>
+template <typename TMinMax>
 class CListEdits final {
-  public:
-    template<typename TChangeButton>
+   public:
+    template <typename TChangeButton>
     class CPair final {
-        CEdit const *const         Edit;
+        CEdit const *const Edit;
         TChangeButton const *const Button;
 
-      public:
+       public:
         CPair(CEdit const &edit, TChangeButton const *const button)
             : Edit(&edit), Button(button) {}
 
@@ -631,25 +633,24 @@ class CListEdits final {
         }
     };
 
-  private:
-    CEdit                                                             *Edits[5];
-    CHashMap<string, CEdit *> *const                                   MapEdit;
+   private:
+    CEdit *Edits[5];
+    CHashMap<string, CEdit *> *const MapEdit;
     CHashMap<string, CPair<ChangeButton<ParametersStandard>> *> *const ValueUp;
-    CHashMap<string, CPair<ChangeButton<ParametersShifted>> *> *const  ValueDown;
+    CHashMap<string, CPair<ChangeButton<ParametersShifted>> *> *const ValueDown;
 
-  public:
+   public:
     CListEdits(ENUM_POSITION_TYPE const position_type, double const price_ratio, double const notional_ratio, CObject<TMinMax> const &parent)
         : MapEdit(new CHashMap<string, CEdit *>),
           ValueUp(new CHashMap<string, CPair<ChangeButton<ParametersStandard>> *>),
           ValueDown(new CHashMap<string, CPair<ChangeButton<ParametersShifted>> *>) {
-
         Edits[0] = new CEdit(new ClampPrice<TMinMax>(position_type, price_ratio), 2, position_type, "Price", Digits());
         Edits[1] = new CEdit(new ClampPriceRatio(position_type, price_ratio), 5, position_type, "PriceRatio", Digits());
         Edits[2] = new CEdit(new ClampVolumeInit(), 8, position_type, "VolumeInit", -log10(Volumes.VolumeMin));
         Edits[3] = new CEdit(new ClampValue(notional_ratio, 1, DBL_MAX), 11, position_type, "NotionalRatio", NotionalRatioDigits);
         Edits[4] = new CEdit(new ClampRestricted<TMinMax>(parent), 18, position_type, "RestrictedTrades", 0);
 
-        for(uint i{0}; i < Edits.Size(); ++i) {
+        for (uint i{0}; i < Edits.Size(); ++i) {
             MapEdit.Add(Edits[i].name, Edits[i]);
             ValueUp.Add(Edits[i].ValueUp.name, new CPair<ChangeButton<ParametersStandard>>(Edits[i], Edits[i].ValueUp));
             ValueDown.Add(Edits[i].ValueDown.name, new CPair<ChangeButton<ParametersShifted>>(Edits[i], Edits[i].ValueDown));
@@ -659,7 +660,7 @@ class CListEdits final {
     ~CListEdits() {
         CKeyValuePair<string, CEdit *> *Edit[];
         MapEdit.CopyTo(Edit);
-        for(uint i{0}; i < Edit.Size(); ++i) {
+        for (uint i{0}; i < Edit.Size(); ++i) {
             delete Edit[i].Value();
             delete Edit[i];
         }
@@ -667,7 +668,7 @@ class CListEdits final {
 
         CKeyValuePair<string, CPair<ChangeButton<ParametersStandard>> *> *PairsUp[];
         ValueUp.CopyTo(PairsUp);
-        for(uint i{0}; i < PairsUp.Size(); ++i) {
+        for (uint i{0}; i < PairsUp.Size(); ++i) {
             delete PairsUp[i].Value();
             delete PairsUp[i];
         }
@@ -675,17 +676,17 @@ class CListEdits final {
 
         CKeyValuePair<string, CPair<ChangeButton<ParametersShifted>> *> *PairsDown[];
         ValueDown.CopyTo(PairsDown);
-        for(uint i{0}; i < PairsDown.Size(); ++i) {
+        for (uint i{0}; i < PairsDown.Size(); ++i) {
             delete PairsDown[i].Value();
             delete PairsDown[i];
         }
         delete ValueDown;
     }
 
-    CEdit *const operator[] (uint const index) const { return Edits[index]; }
+    CEdit *const operator[](uint const index) const { return Edits[index]; }
 
     void Draw() {
-        if(PositionReporter.getStatus()) {
+        if (PositionReporter.getStatus()) {
             Edits[0].Draw();
             Edits[1].Draw();
             Edits[2].Draw();
@@ -699,13 +700,13 @@ class CListEdits final {
     }
 
     void Hide() {
-        for(uint i{0}; i < Edits.Size(); ++i)
+        for (uint i{0}; i < Edits.Size(); ++i)
             Edits[i].Hide();
     }
 
     bool ProcessEdit(string const &sparam) const {
         CEdit *Edit;
-        if(MapEdit.TryGetValue(sparam, Edit)) {
+        if (MapEdit.TryGetValue(sparam, Edit)) {
             Edit.editValue();
             return true;
         }
@@ -714,13 +715,13 @@ class CListEdits final {
 
     bool ChangeEdit(string const &sparam) const {
         CPair<ChangeButton<ParametersStandard>> *PairUp;
-        if(ValueUp.TryGetValue(sparam, PairUp)) {
+        if (ValueUp.TryGetValue(sparam, PairUp)) {
             PairUp.ChangeValue();
             return true;
         }
 
         CPair<ChangeButton<ParametersShifted>> *PairDown;
-        if(ValueDown.TryGetValue(sparam, PairDown)) {
+        if (ValueDown.TryGetValue(sparam, PairDown)) {
             PairDown.ChangeValue();
             return true;
         }
@@ -730,18 +731,18 @@ class CListEdits final {
 };
 
 class CPositionReporter final {
-  public:
+   public:
     enum EnumPositionType {
-        LONG  = POSITION_TYPE_BUY,
+        LONG = POSITION_TYPE_BUY,
         SHORT = POSITION_TYPE_SELL,
         NONE
     };
 
-  private:
-    bool   status;
+   private:
+    bool status;
     double balance, equity, margin, price, volume, avg_volume, profit, swap;
 
-  public:
+   public:
     /*void CalcLevels() const {
       for (uint i{0}; i < Observers.Size(); ++i) {
         Observers[i].CalcLevels();
@@ -809,66 +810,66 @@ class CPositionReporter final {
 
     // private:
     EnumPositionType getPositionType() {
-        if(PositionsTotal()) {
+        if (PositionsTotal()) {
             balance = AccountInfoDouble(ACCOUNT_BALANCE) / PositionsTotal();
-            equity  = AccountInfoDouble(ACCOUNT_EQUITY) / PositionsTotal();
-            margin  = AccountInfoDouble(ACCOUNT_MARGIN) / PositionsTotal();
+            equity = AccountInfoDouble(ACCOUNT_EQUITY) / PositionsTotal();
+            margin = AccountInfoDouble(ACCOUNT_MARGIN) / PositionsTotal();
         } else {
             balance = AccountInfoDouble(ACCOUNT_BALANCE);
-            equity  = AccountInfoDouble(ACCOUNT_EQUITY);
-            margin  = AccountInfoDouble(ACCOUNT_MARGIN);
+            equity = AccountInfoDouble(ACCOUNT_EQUITY);
+            margin = AccountInfoDouble(ACCOUNT_MARGIN);
         }
 
-        if(PositionSelect(Symbol()) && HistorySelectByPosition(PositionGetInteger(POSITION_TICKET))) {
+        if (PositionSelect(Symbol()) && HistorySelectByPosition(PositionGetInteger(POSITION_TICKET))) {
             status = true;
-            price  = PositionGetDouble(POSITION_PRICE_OPEN);
+            price = PositionGetDouble(POSITION_PRICE_OPEN);
             volume = PositionGetDouble(POSITION_VOLUME);
             // PrintFormat("%s %u", __FUNCTION__, HistorySelectByPosition(PositionGetInteger(POSITION_TICKET)));
             avg_volume = volume / HistoryDealsTotal();
-            profit     = PositionGetDouble(POSITION_PROFIT);
-            swap       = PositionGetDouble(POSITION_SWAP);
+            profit = PositionGetDouble(POSITION_PROFIT);
+            swap = PositionGetDouble(POSITION_SWAP);
             return EnumPositionType(PositionGetInteger(POSITION_TYPE));
         } else {
             status = false;
             double const zero{0};
-            price      = zero / zero;
-            volume     = Volumes.VolumeMin;   // SymbolInfoDouble(Symbol(), SYMBOL_VOLUME_MIN);
+            price = zero / zero;
+            volume = Volumes.VolumeMin;  // SymbolInfoDouble(Symbol(), SYMBOL_VOLUME_MIN);
             avg_volume = zero / zero;
-            profit     = zero / zero;
-            swap       = zero / zero;
+            profit = zero / zero;
+            swap = zero / zero;
             return EnumPositionType::NONE;
         }
     }
 } PositionReporter;
 
 class IObject {
-  public:
-    virtual void Hide() const                          = 0;
-    virtual void Draw()                                = 0;
-    virtual void UpdatePrice() const                   = 0;
+   public:
+    virtual void Hide() const = 0;
+    virtual void Draw() = 0;
+    virtual void UpdatePrice() const = 0;
     virtual bool EventEdit(string const &sparam) const = 0;
-    virtual bool EventButton(string const &sparam)     = 0;
-    virtual void CalcLevels() const                    = 0;
+    virtual bool EventButton(string const &sparam) = 0;
+    virtual void CalcLevels() const = 0;
 };
 
-template<typename TMinMax>
+template <typename TMinMax>
 class CObject : public IObject {
-    TMinMax const                 MinMax;
+    TMinMax const MinMax;
     ENUM_SYMBOL_INFO_DOUBLE const Quote;
-    CListEdits<TMinMax> *const    ListEdits;
-    CEdit *const                  RestrictedDeals,
-        const *const              Price,
-        const *const              PriceRatio,
-        const *const              Volume,
-        const *const              NotionalRatio;
+    CListEdits<TMinMax> *const ListEdits;
+    CEdit *const RestrictedDeals,
+        const *const Price,
+        const *const PriceRatio,
+        const *const Volume,
+        const *const NotionalRatio;
     DrawButton *const DrawDeals, *const DrawPositions;
     ActionButton *const Trade, *const Reset;
 
     ENUM_ORDER_TYPE const Type;
-    int const             Direction;
-    bool                  ResetBool;
+    int const Direction;
+    bool ResetBool;
 
-  public:
+   public:
     CObject(ENUM_POSITION_TYPE const position_type, double const price_ratio, double const notional_ratio)
         : Quote(position_type == POSITION_TYPE_BUY ? SYMBOL_ASK : SYMBOL_BID),
           ListEdits(new CListEdits<TMinMax>(position_type, price_ratio, notional_ratio, this)),
@@ -900,13 +901,13 @@ class CObject : public IObject {
     }
 
     void Draw() override {
-        if(orderExists()) {
+        if (orderExists()) {
             Reset.Draw();
         } else {
             ListEdits.Draw();
             DrawDeals.Draw();
             DrawPositions.Draw();
-            if(DrawDeals.State())
+            if (DrawDeals.State())
                 Trade.Draw();
         }
     }
@@ -920,41 +921,41 @@ class CObject : public IObject {
     }
 
     bool EventButton(string const &sparam) {
-        if(Trade.name == sparam) {
-            if(DrawDeals.State()) {
+        if (Trade.name == sparam) {
+            if (DrawDeals.State()) {
                 Trade.Hide();
                 DrawDeals.Hide();
                 DrawPositions.Hide();
                 RestrictedDeals.Hide();
                 ListEdits.Hide();
-                for(uint i{0}; i < DrawDeals.SizeCounter(); ++i) {
+                for (uint i{0}; i < DrawDeals.SizeCounter(); ++i) {
                     TradeLine(i);
                 }
                 Reset.Draw();
             }
             ResetBool = true;
             return true;
-        } else if(Reset.name == sparam) {
+        } else if (Reset.name == sparam) {
             Reset.Hide();
             DrawDeals.Draw();
             DrawPositions.Draw();
             ListEdits.Draw();
-            for(int i{OrdersTotal() - 1}; i >= 0; i--) {
+            for (int i{OrdersTotal() - 1}; i >= 0; i--) {
                 ulong const order_ticket{OrderGetTicket(i)}, const magic_number{OrderGetInteger(ORDER_MAGIC)}, const order_type{OrderGetInteger(ORDER_TYPE)};
                 // PrintFormat("%s %ld %ld %s %s", __FUNCTION__, magic_number, Magic.Number, EnumToString(ENUM_ORDER_TYPE(order_type)), EnumToString(ENUM_ORDER_TYPE(Type)));
-                if(magic_number == Magic.Number && order_type == Type) {
+                if (magic_number == Magic.Number && order_type == Type) {
                     MqlTradeRequest const Request{TRADE_ACTION_REMOVE, magic_number, order_ticket, Symbol(), 0, 0, 0, 0, 0, 0, Type, ORDER_FILLING_FOK, 0, 0, "set your systems volume control slightly above the normal listening level", 0, 0};
                     Send(Request);
                 }
             }
-        } else if(DrawDeals.name == sparam || DrawPositions.name == sparam) {
+        } else if (DrawDeals.name == sparam || DrawPositions.name == sparam) {
             bool const draw_deals{DrawDeals.State()}, const draw_positions{DrawPositions.State()};
-            if(draw_deals || draw_positions) {
-                if(ResetBool) {
+            if (draw_deals || draw_positions) {
+                if (ResetBool) {
                     RestrictedDeals.Draw();
                     ResetBool = false;
                 }
-                if(draw_deals) {
+                if (draw_deals) {
                     Trade.Draw();
                 }
             } else {
@@ -963,11 +964,11 @@ class CObject : public IObject {
                 ResetBool = true;
             }
 
-            if(!draw_deals) {
+            if (!draw_deals) {
                 Trade.Hide();
                 DrawDeals.DeleteLines();
             }
-            if(!draw_positions)
+            if (!draw_positions)
                 DrawPositions.DeleteLines();
 
             return true;
@@ -999,13 +1000,13 @@ class CObject : public IObject {
             Margin{Converter.QuoteToDeposit(total_notional * Contract / Leverage, Quote)};
 
         uint counter{0};
-        while(Margin * MarginCall < equity && total_volume < Volumes.VolumeLimit && counter < AccountInfoInteger(ACCOUNT_LIMIT_ORDERS)) {
-            price           = fmax(0, MinMax.process(price * price_ratio, price + Direction * Point()));
-            notional       *= notional_ratio;
-            volume          = floor(notional / price / Volumes.VolumeStep) * Volumes.VolumeStep;
-            total_volume   += volume;
+        while (Margin * MarginCall < equity && total_volume < Volumes.VolumeLimit && counter < AccountInfoInteger(ACCOUNT_LIMIT_ORDERS)) {
+            price = fmax(0, MinMax.process(price * price_ratio, price + Direction * Point()));
+            notional *= notional_ratio;
+            volume = floor(notional / price / Volumes.VolumeStep) * Volumes.VolumeStep;
+            total_volume += volume;
             total_notional += volume * price;
-            Margin         += Converter.QuoteToDeposit(total_notional * Contract / Leverage, Quote);
+            Margin += Converter.QuoteToDeposit(total_notional * Contract / Leverage, Quote);
             ++counter;
         }
 
@@ -1014,7 +1015,7 @@ class CObject : public IObject {
 
     void CalcLevels() const {
         bool const state_deals{DrawDeals.State()}, const state_positions{DrawPositions.State()};
-        if(state_deals || state_positions) {
+        if (state_deals || state_positions) {
             double balance{PositionReporter.getBalance()},
                 equity{PositionReporter.getEquity()},
                 margin{PositionReporter.getMargin()},
@@ -1040,35 +1041,35 @@ class CObject : public IObject {
             // if (state_positions) DrawPositions.ResetCounter();
             DrawDeals.ResetCounter();
             DrawPositions.ResetCounter();
-            while(Margin * MarginCall < equity && total_volume < Volumes.VolumeLimit && fmax(DrawDeals.SizeCounter(), DrawPositions.SizeCounter()) < AccountInfoInteger(ACCOUNT_LIMIT_ORDERS)) {
-                if(state_deals)
+            while (Margin * MarginCall < equity && total_volume < Volumes.VolumeLimit && fmax(DrawDeals.SizeCounter(), DrawPositions.SizeCounter()) < AccountInfoInteger(ACCOUNT_LIMIT_ORDERS)) {
+                if (state_deals)
                     DrawDeals.Push(price, volume);
-                if(state_positions)
+                if (state_positions)
                     DrawPositions.Push(total_notional / total_volume, total_volume);
 
-                price     = fmax(0, MinMax.process(price * price_ratio, price + Direction * Point()));
+                price = fmax(0, MinMax.process(price * price_ratio, price + Direction * Point()));
                 notional *= NotionalRatio.getValue();
 
-                volume          = fmax(floor(notional / price / Volumes.VolumeStep) * Volumes.VolumeStep, Volumes.VolumeStep);
-                total_volume   += volume;
+                volume = fmax(floor(notional / price / Volumes.VolumeStep) * Volumes.VolumeStep, Volumes.VolumeStep);
+                total_volume += volume;
                 total_notional += volume * price;
-                Margin         += Converter.QuoteToDeposit(total_notional * Contract / Leverage, Quote);
+                Margin += Converter.QuoteToDeposit(total_notional * Contract / Leverage, Quote);
             }
         }
         DrawDeals.Drop(uint(RestrictedDeals.getValue()));
         DrawPositions.Drop(uint(RestrictedDeals.getValue()));
 
-        if(state_deals)
+        if (state_deals)
             DrawDeals.DrawLines();
-        if(state_positions)
+        if (state_positions)
             DrawPositions.DrawLines();
     }
 
-  private:
+   private:
     void TradeLine(uint const counter) const {
         double rest_volume{DrawDeals.Levels[counter].volume}, curr_volume{rest_volume};
-        for(uint i{0}, num_iter{uint(floor(DrawDeals.Levels[counter].volume / Volumes.VolumeMax))}; i <= num_iter; ++i) {
-            curr_volume  = Volumes.VolumeMax <= rest_volume ? Volumes.VolumeMax : rest_volume;
+        for (uint i{0}, num_iter{uint(floor(DrawDeals.Levels[counter].volume / Volumes.VolumeMax))}; i <= num_iter; ++i) {
+            curr_volume = Volumes.VolumeMax <= rest_volume ? Volumes.VolumeMax : rest_volume;
             rest_volume -= curr_volume;
 
             MqlTradeRequest const Request{TRADE_ACTION_PENDING, Magic.Number, 0, Symbol(), curr_volume, DrawDeals.Levels[counter].price, 0, 0, 0, 0, Type, ORDER_FILLING_FOK, 0, 0, DrawDeals.Name(counter), 0, 0};
@@ -1078,10 +1079,10 @@ class CObject : public IObject {
 
     void Send(MqlTradeRequest const &request) const {
         MqlTradeCheckResult Check{NULL};
-        MqlTradeResult      Result{NULL};
-        if(OrderCheck(request, Check)) {
+        MqlTradeResult Result{NULL};
+        if (OrderCheck(request, Check)) {
             // PrintFormat("OrderCheck 1: retcode %u balance %g equity %g profit %g margin %g margin_free %g margin_level %g comment %s", Check.retcode, Check.balance, Check.equity, Check.profit, Check.margin, Check.margin_free, Check.margin_level, Check.comment);
-            if(OrderSendAsync(request, Result)) {
+            if (OrderSendAsync(request, Result)) {
                 // PrintFormat("OrderSend 1: retcode %u deal %llu order %llu volume %g price %g bid %g ask %g comment %s request_id %u retcode_external %u", Result.retcode, Result.deal, Result.order, Result.volume, Result.price, Result.bid, Result.ask, Result.comment, Result.request_id, Result.retcode_external);
             } else {
                 PrintFormat("OrderSend 2: retcode %u | deal %llu | order %llu | volume %g | price %g | bid %g | ask %g | comment %s | request_id %u | retcode_external %u", Result.retcode, Result.deal, Result.order, Result.volume, Result.price, Result.bid, Result.ask, Result.comment, Result.request_id, Result.retcode_external);
@@ -1092,9 +1093,9 @@ class CObject : public IObject {
     }
 
     bool orderExists() const {
-        for(int i{OrdersTotal() - 1}; i >= 0; i--) {
+        for (int i{OrdersTotal() - 1}; i >= 0; i--) {
             OrderGetTicket(i);
-            if(Magic.Number == OrderGetInteger(ORDER_MAGIC) && Type == OrderGetInteger(ORDER_TYPE)) {
+            if (Magic.Number == OrderGetInteger(ORDER_MAGIC) && Type == OrderGetInteger(ORDER_TYPE)) {
                 return true;
             }
         }
@@ -1146,20 +1147,20 @@ class CObject : public IObject {
 };
 
 class CObjectLong final : public CObject<ExtremumMin> {
-  public:
+   public:
     CObjectLong() : CObject(POSITION_TYPE_BUY, PriceRatioLong, NotionalRatioLong) {}
 };
 
 class CObjectShort final : public CObject<ExtremumMax> {
-  public:
+   public:
     CObjectShort() : CObject(POSITION_TYPE_SELL, PriceRatioShort, NotionalRatioShort) {}
 };
 
 class CObjectManager final {
-    double   X_proportions, Y_proportions;
+    double X_proportions, Y_proportions;
     IObject *Observers[2], *LongObserver, *ShortObserver;
 
-  public:
+   public:
     CObjectManager()
         : X_proportions(Xproportions), Y_proportions(Yproportions) {
         LongObserver = Observers[0] = new CObjectLong;
@@ -1167,12 +1168,12 @@ class CObjectManager final {
     }
 
     ~CObjectManager() {
-        for(uint i{0}; i < Observers.Size(); ++i)
+        for (uint i{0}; i < Observers.Size(); ++i)
             delete Observers[i];
     }
 
     void Draw() {
-        switch(PositionReporter.getPositionType()) {
+        switch (PositionReporter.getPositionType()) {
             case CPositionReporter::EnumPositionType::LONG:
                 // printFormat("%s %s", __FUNCTION__, EnumToString(CPositionReporter::EnumPositionType::LONG));
                 LongObserver.Draw();
@@ -1185,7 +1186,7 @@ class CObjectManager final {
                 LongObserver.Hide();
                 break;
             default:
-                for(uint i{0}; i < Observers.Size(); ++i) {
+                for (uint i{0}; i < Observers.Size(); ++i) {
                     Observers[i].Draw();
                     Observers[i].CalcLevels();
                 }
@@ -1193,15 +1194,15 @@ class CObjectManager final {
     }
 
     void UpdatePrice() const {
-        for(uint i{0}; i < Observers.Size(); ++i) {
+        for (uint i{0}; i < Observers.Size(); ++i) {
             Observers[i].UpdatePrice();
             Observers[i].CalcLevels();
         }
     }
 
     void EventEdit(string const &sparam) const {
-        for(uint i{0}; i < Observers.Size(); ++i) {
-            if(Observers[i].EventEdit(sparam)) {
+        for (uint i{0}; i < Observers.Size(); ++i) {
+            if (Observers[i].EventEdit(sparam)) {
                 Observers[i].CalcLevels();
                 return;
             }
@@ -1209,8 +1210,8 @@ class CObjectManager final {
     }
 
     void EventButton(string const &sparam) {
-        for(uint i{0}; i < Observers.Size(); ++i) {
-            if(Observers[i].EventButton(sparam)) {
+        for (uint i{0}; i < Observers.Size(); ++i) {
+            if (Observers[i].EventButton(sparam)) {
                 Observers[i].CalcLevels();
                 return;
             }
@@ -1220,7 +1221,6 @@ class CObjectManager final {
 } ObjectManager;
 
 int OnInit() {
-
     /*Base * base = new Derived;
     Base * base1 = base;
     base1.function();
@@ -1270,24 +1270,24 @@ int OnInit() {
     // ListPeriods.UpdateButton();
     // ProportionsManager.UpdateProportions();
 
-    string str     = "";
-    bool   success = INIT_SUCCEEDED;
-    if(!TerminalInfoInteger(TERMINAL_TRADE_ALLOWED)) {
-        str     += EnumToString(TERMINAL_TRADE_ALLOWED) + " ";
-        success  = INIT_FAILED;
+    string str = "";
+    bool success = INIT_SUCCEEDED;
+    if (!TerminalInfoInteger(TERMINAL_TRADE_ALLOWED)) {
+        str += EnumToString(TERMINAL_TRADE_ALLOWED) + " ";
+        success = INIT_FAILED;
     }
 
-    if(!AccountInfoInteger(ACCOUNT_TRADE_ALLOWED)) {
-        str     += EnumToString(ACCOUNT_TRADE_ALLOWED) + " ";
-        success  = INIT_FAILED;
+    if (!AccountInfoInteger(ACCOUNT_TRADE_ALLOWED)) {
+        str += EnumToString(ACCOUNT_TRADE_ALLOWED) + " ";
+        success = INIT_FAILED;
     }
 
-    if(AccountInfoInteger(ACCOUNT_MARGIN_MODE) != ACCOUNT_MARGIN_MODE_RETAIL_NETTING) {
-        str     += EnumToString(ENUM_ACCOUNT_MARGIN_MODE(AccountInfoInteger(ACCOUNT_MARGIN_MODE)));
-        success  = INIT_FAILED;
+    if (AccountInfoInteger(ACCOUNT_MARGIN_MODE) != ACCOUNT_MARGIN_MODE_RETAIL_NETTING) {
+        str += EnumToString(ENUM_ACCOUNT_MARGIN_MODE(AccountInfoInteger(ACCOUNT_MARGIN_MODE)));
+        success = INIT_FAILED;
     }
 
-    if(success == INIT_FAILED) {
+    if (success == INIT_FAILED) {
         // ExpertRemove();
         PrintFormat("%s %s", __FUNCTION__, str);
     }
@@ -1405,14 +1405,14 @@ void OnTradeTransaction(MqlTradeTransaction const &transaction, MqlTradeRequest 
       EnumToString(transaction.deal_type));*/
 
     // PrintFormat("%s %s", __FUNCTION__, EnumToString(transaction.type));
-    if(transaction.type == TRADE_TRANSACTION_HISTORY_ADD) {
+    if (transaction.type == TRADE_TRANSACTION_HISTORY_ADD) {
         // TransactionInProgress=false;
         // ObjectsDeleteAll(ChartID(), 0, OBJ_HLINE);
         // PrintFormat("%s %s %s", __FUNCTION__, transaction.symbol, request.symbol);
         // PositionReporter.UpdatePrice();
         // PositionReporter.Draw();
         // PrintFormat("%s in %s %s", __FUNCTION__, transaction.symbol, request.symbol);
-    } else if(transaction.type == TRADE_TRANSACTION_REQUEST) {
+    } else if (transaction.type == TRADE_TRANSACTION_REQUEST) {
         // ObjectManager.UpdatePrice();
         // ObjectManager.Draw();
         // ObjectManager.SetGeometry();
@@ -1466,11 +1466,11 @@ void OnChartEvent(int const id, long const &lparam, double const &dparam, string
     // PrintFormat("%s ", __FUNCTION__);
     //  ObjectManager.SetGeometry();
     //   ChartRedraw();
-    if(id == CHARTEVENT_CLICK) {
+    if (id == CHARTEVENT_CLICK) {
         // PrintFormat("%s", __FUNCTION__);
-    } else if(id == CHARTEVENT_MOUSE_MOVE) {
-    } else if(id == CHARTEVENT_CUSTOM) {
-    } else if(id == CHARTEVENT_OBJECT_ENDEDIT) {
+    } else if (id == CHARTEVENT_MOUSE_MOVE) {
+    } else if (id == CHARTEVENT_CUSTOM) {
+    } else if (id == CHARTEVENT_OBJECT_ENDEDIT) {
         // ObjectLong.EventEdit(sparam);
         // ObjectShort.EventEdit(sparam);
         ObjectManager.EventEdit(sparam);
@@ -1478,7 +1478,7 @@ void OnChartEvent(int const id, long const &lparam, double const &dparam, string
         ChartRedraw();
         // ObjectLong.CalcLevels();
         // ObjectShort.CalcLevels();
-    } else if(id == CHARTEVENT_OBJECT_CLICK) {
+    } else if (id == CHARTEVENT_OBJECT_CLICK) {
         // ObjectLong.EventButtonClick(sparam);
         // ObjectShort.EventButtonClick(sparam);
         // ObjectLong.CalcLevels();
@@ -1491,7 +1491,7 @@ void OnChartEvent(int const id, long const &lparam, double const &dparam, string
         // PositionReporter.CalcLevels();
         // ListPeriods.ChangePeriod(sparam);
         ChartRedraw();
-    } else if(id == CHARTEVENT_CHART_CHANGE) {
+    } else if (id == CHARTEVENT_CHART_CHANGE) {
         ;
         ProportionsManager.UpdateProportions();
         ObjectManager.Draw();
@@ -1507,11 +1507,11 @@ string StringFloatSpread() { return StringFormat("%.*f", Digits(), SymbolInfoInt
 string StringIntegerSpread() { return StringFormat("%u", SymbolInfoInteger(Symbol(), SYMBOL_SPREAD)); }
 
 class CSpread final {
-  public:
+   public:
     PrtStringSpread String;
     CSpread()
     /*: String(SymbolInfoInteger(Symbol(), SYMBOL_SPREAD_FLOAT)?StringFloatSpread:StringIntegerSpread)*/ {
-        if(SymbolInfoInteger(Symbol(), SYMBOL_SPREAD_FLOAT))
+        if (SymbolInfoInteger(Symbol(), SYMBOL_SPREAD_FLOAT))
             String = StringFloatSpread;
         else
             String = StringIntegerSpread;
@@ -1519,43 +1519,43 @@ class CSpread final {
 };
 
 class CAdministrative final {
-  private:
+   private:
     uint const last;
 
-  public:
+   public:
     double Fee, RangeDiff[], Leverage[];
     CAdministrative()
         : last(ArrayResize(Leverage, ArrayResize(RangeDiff, 3) + 1)) {
         // PrintFormat("%s %s %s", SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE), SymbolInfoString(Symbol(), SYMBOL_CURRENCY_PROFIT), SymbolInfoString(Symbol(), SYMBOL_CURRENCY_MARGIN));
         // PrintFormat("%s: %s WTF", __FUNCTION__, EnumToString(ENUM_SYMBOL_SECTOR(SymbolInfoInteger(Symbol(), SYMBOL_SECTOR))));
 
-        if(SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE) == "BTC") {
-            Fee          = 0.000035;
+        if (SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE) == "BTC") {
+            Fee = 0.000035;
             RangeDiff[0] = 500000;
             RangeDiff[1] = 5000000 - 500000;
             RangeDiff[2] = 10000000 - 5000000;
-            Leverage[0]  = 1000;
-            Leverage[1]  = 500;
-            Leverage[2]  = 100;
-            Leverage[3]  = 50;
-        } else if(SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE) == "BTC") {
-            Fee          = 0.000750;
+            Leverage[0] = 1000;
+            Leverage[1] = 500;
+            Leverage[2] = 100;
+            Leverage[3] = 50;
+        } else if (SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE) == "BTC") {
+            Fee = 0.000750;
             RangeDiff[0] = 50000;
             RangeDiff[1] = 500000 - 50000;
             RangeDiff[2] = 1000000 - 500000;
-            Leverage[0]  = 100;
-            Leverage[1]  = 50;
-            Leverage[2]  = 25;
-            Leverage[3]  = 10;
-        } else if(SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE) == "DOG") {
-            Fee          = 0.000750;
+            Leverage[0] = 100;
+            Leverage[1] = 50;
+            Leverage[2] = 25;
+            Leverage[3] = 10;
+        } else if (SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE) == "DOG") {
+            Fee = 0.000750;
             RangeDiff[0] = 5000;
             RangeDiff[1] = 50000 - 5000;
             RangeDiff[2] = 100000 - 50000;
-            Leverage[0]  = 100;
-            Leverage[1]  = 50;
-            Leverage[2]  = 25;
-            Leverage[3]  = 10;
+            Leverage[0] = 100;
+            Leverage[1] = 50;
+            Leverage[2] = 25;
+            Leverage[3] = 10;
         }
 
         /*switch(ENUM_SYMBOL_SECTOR(SymbolInfoInteger(Symbol(), SYMBOL_SECTOR))) {
@@ -1606,8 +1606,8 @@ class CAdministrative final {
     }
 
     double Margin(double const residual, uint const curr) const {
-        if(curr + 1 < last)
-            if(residual < RangeDiff[curr])
+        if (curr + 1 < last)
+            if (residual < RangeDiff[curr])
                 return residual / Leverage[curr];
             else
                 return fmin(residual, RangeDiff[curr]) / Leverage[curr] + Margin(residual - RangeDiff[curr], curr + 1);
