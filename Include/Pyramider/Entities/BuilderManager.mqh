@@ -1,0 +1,92 @@
+// ###<Experts/Pyramider.mq5>
+
+#include <Pyramider/Collections/PeriodCollection.mqh>
+#include <Pyramider/Entities/PositionReporter.mqh>
+#include <Pyramider/Entities/ProportionsManager.mqh>
+#include <Pyramider/Entities/TradeBuilder.mqh>
+
+class ExtremumMin final {
+   public:
+    double process(double const val1, double const val2) const { return fmin(val1, val2); }
+};
+
+class ExtremumMax final {
+   public:
+    double process(double const val1, double const val2) const { return fmax(val1, val2); }
+};
+
+class CBuilderManager final {
+    double m_Xproportions, m_Yproportions;
+    CProportionsManager ProportionsManager;
+    CPositionReporter PositionReporter;
+    CPeriodCollection *PeriodCollection;
+    ITradeBuilder *TradeBuilders[2];
+    CTradeBuilder<ExtremumMin> *LongBuilder;
+    CTradeBuilder<ExtremumMax> *ShortBuilder;
+
+   public:
+    CBuilderManager()
+        : m_Xproportions(Xproportions),
+          m_Yproportions(Yproportions),
+          PeriodCollection(new CPeriodCollection(ProportionsManager)),
+          LongBuilder(new CTradeBuilder<ExtremumMin>(ProportionsManager, PositionReporter, POSITION_TYPE_BUY, PriceRatioLong, NotionalRatioLong)),
+          ShortBuilder(new CTradeBuilder<ExtremumMax>(ProportionsManager, PositionReporter, POSITION_TYPE_SELL, PriceRatioShort, NotionalRatioShort)) {
+        TradeBuilders[0] = LongBuilder;
+        TradeBuilders[1] = ShortBuilder;
+    }
+
+    ~CBuilderManager() {
+        for (uint i{0}; i < TradeBuilders.Size(); ++i) delete TradeBuilders[i];
+        delete PeriodCollection;
+    }
+
+    void Draw() {
+        ProportionsManager.UpdateProportions(PeriodCollection.Size());
+        switch (PositionReporter.getPositionType()) {
+            case CPositionReporter::EnumPositionType::LONG:
+                // printFormat("%s %s", __FUNCTION__, EnumToString(CPositionReporter::EnumPositionType::LONG));
+                LongBuilder.Draw();
+                LongBuilder.CalcLevels();
+                ShortBuilder.Hide();
+                break;
+            case CPositionReporter::EnumPositionType::SHORT:
+                ShortBuilder.Draw();
+                ShortBuilder.CalcLevels();
+                LongBuilder.Hide();
+                break;
+            default:
+                for (uint i{0}; i < TradeBuilders.Size(); ++i) {
+                    TradeBuilders[i].Draw();
+                    TradeBuilders[i].CalcLevels();
+                }
+        }
+        PeriodCollection.UpdateButton();
+        PeriodCollection.Draw();
+    }
+
+    void UpdatePrice() const {
+        for (uint i{0}; i < TradeBuilders.Size(); ++i) {
+            TradeBuilders[i].UpdatePrice();
+            TradeBuilders[i].CalcLevels();
+        }
+    }
+
+    void EventEdit(string const &sparam) const {
+        for (uint i{0}; i < TradeBuilders.Size(); ++i) {
+            if (TradeBuilders[i].EventEdit(sparam)) {
+                TradeBuilders[i].CalcLevels();
+                return;
+            }
+        }
+    }
+
+    void EventButton(string const &sparam) {
+        for (uint i{0}; i < TradeBuilders.Size(); ++i) {
+            if (TradeBuilders[i].EventButton(sparam)) {
+                TradeBuilders[i].CalcLevels();
+                return;
+            }
+        }
+        PeriodCollection.ChangePeriod(sparam);
+    }
+};
