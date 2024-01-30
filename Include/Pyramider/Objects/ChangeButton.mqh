@@ -1,8 +1,5 @@
 // ###<Experts/Pyramider.mq5>
 
-#include <Pyramider/Objects/Stateful.mqh>
-// #include <Pyramider/Parameters.mqh>
-
 template <typename ParamsType>
 class ChangeButton final : public StateObject<ParamsType> {
    public:

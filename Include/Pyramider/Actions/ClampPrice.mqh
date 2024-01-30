@@ -1,5 +1,6 @@
 // ###<Experts/Pyramider.mq5>
 
+#include "IAction.mqh"
 template <typename TMinMax>
 class ClampPrice final : public IAction {
     TMinMax const MinMax;

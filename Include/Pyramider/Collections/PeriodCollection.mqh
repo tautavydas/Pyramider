@@ -1,6 +1,6 @@
 // ###<Experts/Pyramider.mq5>
 
-// #include <Generic/HashMap.mqh>
+#include <Generic/HashMap.mqh>
 #include <Pyramider/Entities/ProportionsManager.mqh>
 #include <Pyramider/Objects/PeriodButton.mqh>
 

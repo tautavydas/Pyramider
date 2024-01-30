@@ -1,5 +1,4 @@
 // ###<Experts/Pyramider.mq5>
-#include "IAction.mqh"
 
 class ClampPriceRatio final : public IAction {
     double const default_value, const lower_boundary, const higher_boundary;

@@ -1,8 +1,5 @@
 // ###<Experts/Pyramider.mq5>
 
-#include <Pyramider/Objects/Stateful.mqh>
-// #include <Pyramider/Parameters.mqh>
-
 class DrawButton final : public StateObject<Parameters> {
    public:
     class Pair final {

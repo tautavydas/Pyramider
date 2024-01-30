@@ -1,6 +1,6 @@
 // ###<Experts/Pyramider.mq5>
 
-#include <Pyramider/Objects/Drawable.mqh>
+#include "Drawable.mqh"
 
 template <typename ParametersType>
 class StateObject : public IDrawable {

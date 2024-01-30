@@ -1,7 +1,5 @@
 // ###<Experts/Pyramider.mq5>
 
-// #include <Pyramider/Actions/IAction.mqh>
-
 class ClampVolumeInit final : public IAction {
     CPositionReporter const* const PositionReporter;
 

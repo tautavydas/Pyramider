@@ -1,8 +1,5 @@
 // ###<Experts/Pyramider.mq5>
-
 #include <Pyramider/Actions/IAction.mqh>
-// #include <Pyramider/Objects/ChangeButton.mqh>
-// #include <Pyramider/Objects/Drawable.mqh>
 
 class CEditableObject final : public IDrawable {
     color const border_color;

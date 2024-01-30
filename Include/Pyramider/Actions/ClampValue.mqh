@@ -1,5 +1,4 @@
 // ###<Experts/Pyramider.mq5>
-#include <Pyramider/Actions/IAction.mqh>
 
 class ClampValue final : public IAction {
     double const init_value, const lower_boundary, const higher_boundary;

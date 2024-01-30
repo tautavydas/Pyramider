@@ -1,7 +1,7 @@
 // ###<Experts/Pyramider.mq5>
 
-#include <Pyramider/Entities/Parameters.mqh>
-#include <Pyramider/Objects/Stateful.mqh>
+#include "Parameters.mqh"
+#include "Stateful.mqh"
 
 class PeriodButton : public StateObject<Parameters> {
    public:

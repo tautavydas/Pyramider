@@ -104,7 +104,7 @@ class CPositionReporter final {
             double const zero{0};
             price = zero / zero;
             volume = Volumes.VolumeMin;  // SymbolInfoDouble(Symbol(), SYMBOL_VOLUME_MIN);
-            avg_volume = zero / zero;
+            avg_volume = volume;
             profit = zero / zero;
             swap = zero / zero;
             return EnumPositionType::NONE;
