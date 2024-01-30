@@ -2,6 +2,7 @@
 !.gitignore
 !Experts/
 Experts/*
+!Experts/Pyramider.mq5
 !Include/
 Include/*
 !Include/Pyramider
