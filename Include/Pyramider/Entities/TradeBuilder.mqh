@@ -193,8 +193,8 @@ class CTradeBuilder : public ITradeBuilder {
                 margin{PositionReporter.getMargin()},
                 profit{PositionReporter.getProfit()},
                 swap{PositionReporter.getSwap()},
-                // price   {PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue()},
-                price{Price.getValue()},
+                price{PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue()},
+                // price{Price.getValue()},
                 price_ratio{PriceRatio.getValue()},
                 // volume  {PositionReporter.getStatus() ? PositionReporter.getAvgVolume() : VolumeInit.getValue()},
                 volume{Volume.getValue()},
@@ -202,15 +202,17 @@ class CTradeBuilder : public ITradeBuilder {
                 total_volume{volume + PositionReporter.getVolume()},
                 notional{price * volume},
                 notional_ratio{NotionalRatio.getValue()},
-                total_notional{notional + PositionReporter.getPrice() * PositionReporter.getVolume()},
+                total_notional{notional + price * PositionReporter.getVolume()},
                 Margin{Converter.QuoteToDeposit(total_notional * Contract / Leverage, Quote)};
 
             // PrintFormat("%s %f %f %f | %f", __FUNCTION__, PositionReporter.getPrice(), PositionReporter.getVolume(), PositionReporter.getPrice() * PositionReporter.getVolume(), total_notional);
             // PrintFormat("%f %f %f", price, PositionReporter.getPrice(), Price.getValue());
-            // PrintFormat("%s %s %f | %f %f %f %f | %f %f %f | %f %f | %u", __FUNCTION__, string(PositionReporter.getStatus()), price, SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW), SymbolInfoDouble(Symbol(), SYMBOL_BIDHIGH), SymbolInfoDouble(Symbol(), SYMBOL_ASKLOW), SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH), SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH) - SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW), (SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH) - SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW)) / Point(), Point() / (SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH) - SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW)), Point(), SymbolInfoDouble(Symbol(), SYMBOL_POINT), SymbolInfoInteger(Symbol(), SYMBOL_DIGITS));
+            PrintFormat("%s %s %f | %f %f %f %f | %f %f %f | %f %f | %u", __FUNCTION__, string(PositionReporter.getStatus()), price, SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW), SymbolInfoDouble(Symbol(), SYMBOL_BIDHIGH), SymbolInfoDouble(Symbol(), SYMBOL_ASKLOW), SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH), SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH) - SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW), (SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH) - SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW)) / Point(), Point() / (SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH) - SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW)), Point(), SymbolInfoDouble(Symbol(), SYMBOL_POINT), SymbolInfoInteger(Symbol(), SYMBOL_DIGITS));
 
             // if (state_deals    ) DrawDeals    .ResetCounter();
             // if (state_positions) DrawPositions.ResetCounter();
+            // PrintFormat("%s equity %f margin %f profit %f swap %f price %f price_ratio %f volume %f total_volume %f notional %f notional_ratio %f total_notional %f Margin %f", __FUNCTION__, equity, margin, profit, swap, price, price_ratio, volume, total_volume, notional, notional_ratio, total_notional, Margin);
+            // PrintFormat("%s total_notional %f = notional % * ", __FUNCTION__, total_notional, );
             DrawDeals.ResetCounter();
             DrawPositions.ResetCounter();
             while (Margin * MarginCall < equity && total_volume < Volumes.VolumeLimit && fmax(DrawDeals.SizeCounter(), DrawPositions.SizeCounter()) < AccountInfoInteger(ACCOUNT_LIMIT_ORDERS)) {
