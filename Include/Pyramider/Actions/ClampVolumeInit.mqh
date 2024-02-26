@@ -5,7 +5,7 @@ class ClampVolumeInit final : public IAction {
 
    public:
     ClampVolumeInit(CPositionReporter const& position_reporter) : PositionReporter(&position_reporter) {}
-    double onInit() const override { return onButton(PositionReporter.getAvgVolume()); }
+    double onInit() const override { return onButton(PositionReporter.getVolume()); }
     double onTick(double const val) const override { return val; }
     double onButton(double const val) const override { return fmax(Volumes.VolumeMin, val); }
 };

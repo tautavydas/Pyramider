@@ -12,16 +12,18 @@ class CEditableObject final : public IDrawable {
     ChangeButton<ParametersStandard> *const ValueUp;
     ChangeButton<ParametersShifted> *const ValueDown;
     uint const digits;
-    CEditableObject(CProportionsManager const &proportions_manager, IAction const &action, uint const coefX, ENUM_POSITION_TYPE const position_type, string const name_, double const digits_)
+    CEditableObject(CProportionsManager const &proportions_manager, IAction const &action, uint const coefX, ENUM_POSITION_TYPE const position_type, string const name_, uint const digits_)
         : IDrawable(OBJ_EDIT, (position_type == POSITION_TYPE_BUY ? "Long" : "Short") + name_, name_, position_type == POSITION_TYPE_BUY ? clrBlue : clrRed, clrLightGray),
           border_color(clrGray),
-          step(pow(10.0, -digits_)),
+          step(pow(10.0, -double(digits_))),
           BoolInit(true),
           Action(GetPointer(action)),
           Params(new Parameters(proportions_manager, coefX, position_type, 2, 1)),
           ValueUp(new ChangeButton<ParametersStandard>(proportions_manager, coefX, position_type, name)),
           ValueDown(new ChangeButton<ParametersShifted>(proportions_manager, coefX, position_type, name)),
-          digits(uint(digits_)) {}
+          digits(digits_) {
+        // PrintFormat("%s %s digits %f digits %d step %f", __FUNCTION__, name, digits_, digits, step);
+    }
 
     ~CEditableObject() {
         delete Action;
@@ -49,11 +51,22 @@ class CEditableObject final : public IDrawable {
         BoolInit = true;
     }
 
-    double getValue() const { return StringToDouble(ObjectGetString(ChartID(), name, OBJPROP_TEXT)); }
-    void editValue() const { setText(Action.onButton(getValue())); }
-    void changeValue(OperationPtr const &Operation) const { setText(Action.onButton(Operation(getValue(), step))); }
+    double getValue() const {
+        // PrintFormat("%s %f", __FUNCTION__, StringToDouble(ObjectGetString(ChartID(), name, OBJPROP_TEXT)));
+        return StringToDouble(ObjectGetString(ChartID(), name, OBJPROP_TEXT));
+    }
+    void editValue() const {
+        setText(Action.onButton(getValue()));
+    }
+    void changeValue(OperationPtr const &Operation) const {
+        setText(Action.onButton(Operation(getValue(), step)));
+    }
 
    private:
-    void setValue() const { setText(Action.onTick(getValue())); }
-    void setText(double const display_value) const { ObjectSetString(ChartID(), name, OBJPROP_TEXT, StringFormat("%.*f", digits, display_value)); }
+    void setValue() const {
+        setText(Action.onTick(getValue()));
+    }
+    void setText(double const display_value) const {
+        ObjectSetString(ChartID(), name, OBJPROP_TEXT, StringFormat("%.*f", digits, display_value));
+    }
 };

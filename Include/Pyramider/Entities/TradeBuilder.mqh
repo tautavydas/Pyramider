@@ -38,12 +38,11 @@ class CTradeBuilder : public ITradeBuilder {
     CTradeBuilder(CProportionsManager const &proportions_manager,
                   CPositionReporter &position_reporter,
                   ENUM_POSITION_TYPE const position_type,
-                  double const price_ratio,
                   double const notional_ratio)
         : PositionReporter(&position_reporter),
           Converter(new CConverter(SymbolInfoString(Symbol(), SYMBOL_CURRENCY_PROFIT), "USD", AccountInfoString(ACCOUNT_CURRENCY))),
           Quote(position_type == POSITION_TYPE_BUY ? SYMBOL_ASK : SYMBOL_BID),
-          EditableCollection(new CEditableCollection<ExtremumType>(proportions_manager, position_reporter, position_type, price_ratio, notional_ratio, this)),
+          EditableCollection(new CEditableCollection<ExtremumType>(proportions_manager, position_reporter, position_type, notional_ratio, this)),
           Price(EditableCollection[0]),
           PriceRatio(EditableCollection[1]),
           Volume(EditableCollection[2]),
@@ -159,8 +158,8 @@ class CTradeBuilder : public ITradeBuilder {
             margin{PositionReporter.getMargin()},
             profit{PositionReporter.getProfit()},
             swap{PositionReporter.getSwap()},
-            // price   {PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue()},
-            price{Price.getValue()},
+            price{PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue()},
+            // price{Price.getValue()},
             price_ratio{PriceRatio.getValue()},
             // volume  {PositionReporter.getStatus() ? PositionReporter.getAvgVolume() : VolumeInit.getValue()},
             volume{Volume.getValue()},
@@ -168,7 +167,7 @@ class CTradeBuilder : public ITradeBuilder {
             total_volume{volume + PositionReporter.getVolume()},
             notional{price * volume},
             notional_ratio{NotionalRatio.getValue()},
-            total_notional{notional + PositionReporter.getPrice() * PositionReporter.getVolume()},
+            total_notional{notional + price * PositionReporter.getVolume()},
             Margin{Converter.QuoteToDeposit(total_notional * Contract / Leverage, Quote)};
 
         uint counter{0};
@@ -181,6 +180,8 @@ class CTradeBuilder : public ITradeBuilder {
             Margin += Converter.QuoteToDeposit(total_notional * Contract / Leverage, Quote);
             ++counter;
         }
+
+        // PrintFormat("%s price %f price_ratio %f volume %f total_volume %f notional %f notional_ratio %f total_notional %f Margin %f counter %d", __FUNCTION__, price, price_ratio, volume, total_volume, notional, notional_ratio, total_notional, Margin, counter);
 
         return counter;
     }
@@ -207,7 +208,8 @@ class CTradeBuilder : public ITradeBuilder {
 
             // PrintFormat("%s %f %f %f | %f", __FUNCTION__, PositionReporter.getPrice(), PositionReporter.getVolume(), PositionReporter.getPrice() * PositionReporter.getVolume(), total_notional);
             // PrintFormat("%f %f %f", price, PositionReporter.getPrice(), Price.getValue());
-            PrintFormat("%s %s %f | %f %f %f %f | %f %f %f | %f %f | %u", __FUNCTION__, string(PositionReporter.getStatus()), price, SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW), SymbolInfoDouble(Symbol(), SYMBOL_BIDHIGH), SymbolInfoDouble(Symbol(), SYMBOL_ASKLOW), SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH), SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH) - SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW), (SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH) - SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW)) / Point(), Point() / (SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH) - SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW)), Point(), SymbolInfoDouble(Symbol(), SYMBOL_POINT), SymbolInfoInteger(Symbol(), SYMBOL_DIGITS));
+
+            // PrintFormat("%s %s %f | %f %f %f %f | %f %f %f | %f %f | %u", __FUNCTION__, string(PositionReporter.getStatus()), price, SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW), SymbolInfoDouble(Symbol(), SYMBOL_BIDHIGH), SymbolInfoDouble(Symbol(), SYMBOL_ASKLOW), SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH), SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH) - SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW), (SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH) - SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW)) / Point(), Point() / (SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH) - SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW)), Point(), SymbolInfoDouble(Symbol(), SYMBOL_POINT), SymbolInfoInteger(Symbol(), SYMBOL_DIGITS));
 
             // if (state_deals    ) DrawDeals    .ResetCounter();
             // if (state_positions) DrawPositions.ResetCounter();
@@ -222,16 +224,18 @@ class CTradeBuilder : public ITradeBuilder {
                     DrawPositions.Push(total_notional / total_volume, total_volume);
 
                 price = fmax(0, MinMax.process(price * price_ratio, price + Direction * Point()));
-                notional *= NotionalRatio.getValue();
+                notional *= notional_ratio;
 
                 volume = fmax(floor(notional / price / Volumes.VolumeStep) * Volumes.VolumeStep, Volumes.VolumeStep);
                 total_volume += volume;
                 total_notional += volume * price;
                 Margin += Converter.QuoteToDeposit(total_notional * Contract / Leverage, Quote);
             }
+            uint const restricted_deals{uint(
+                RestrictedDeals.getValue())};
+            DrawDeals.Drop(restricted_deals);
+            DrawPositions.Drop(restricted_deals);
         }
-        DrawDeals.Drop(uint(RestrictedDeals.getValue()));
-        DrawPositions.Drop(uint(RestrictedDeals.getValue()));
 
         if (state_deals)
             DrawDeals.DrawLines();

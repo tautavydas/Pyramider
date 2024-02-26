@@ -66,7 +66,7 @@ class CPositionReporter final {
 
     double getVolume() const { return volume; }
 
-    double getAvgVolume() const { return avg_volume; }
+    // double getAvgVolume() const { return avg_volume; }
 
     /*double getVolume() const {
       if (status) {

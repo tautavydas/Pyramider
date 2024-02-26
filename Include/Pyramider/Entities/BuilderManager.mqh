@@ -29,14 +29,15 @@ class CBuilderManager final {
         : m_Xproportions(Xproportions),
           m_Yproportions(Yproportions),
           PeriodCollection(new CPeriodCollection(ProportionsManager)),
-          LongBuilder(new CTradeBuilder<ExtremumMin>(ProportionsManager, PositionReporter, POSITION_TYPE_BUY, PriceRatioLong, NotionalRatioLong)),
-          ShortBuilder(new CTradeBuilder<ExtremumMax>(ProportionsManager, PositionReporter, POSITION_TYPE_SELL, PriceRatioShort, NotionalRatioShort)) {
+          LongBuilder(new CTradeBuilder<ExtremumMin>(ProportionsManager, PositionReporter, POSITION_TYPE_BUY, NotionalRatioLong)),
+          ShortBuilder(new CTradeBuilder<ExtremumMax>(ProportionsManager, PositionReporter, POSITION_TYPE_SELL, NotionalRatioShort)) {
         TradeBuilders[0] = LongBuilder;
         TradeBuilders[1] = ShortBuilder;
     }
 
     ~CBuilderManager() {
-        for (uint i{0}; i < TradeBuilders.Size(); ++i) delete TradeBuilders[i];
+        for (uint i{0}; i < TradeBuilders.Size(); ++i)
+            delete TradeBuilders[i];
         delete PeriodCollection;
     }
 
