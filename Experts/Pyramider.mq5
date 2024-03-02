@@ -9,7 +9,7 @@
 input double  // PriceRatioLong = 1, PriceRatioShort = 1,
     NotionalRatioLong = 1,
     NotionalRatioShort = 1,
-    ProfitRatioLong = 1, ProfitRatioShort = 1,
+    // ProfitRatioLong = 1, ProfitRatioShort = 1,
     Xproportions = 0.025, Yproportions = 0.1;
 // input uint PriceRatioDigits    = 3    , NotionalRatioDigits = 2;
 input uint NotionalRatioDigits = 2;
@@ -137,7 +137,7 @@ void OnTick() {
     ObjectShort.Update();
     ChartRedraw();*/
     // PositionReporter.SetValue();
-    BuilderManager.UpdatePrice();
+    BuilderManager.onTick();
 }
 
 void OnTrade() {
@@ -299,7 +299,7 @@ void OnChartEvent(int const id, long const &lparam, double const &dparam, string
     } else if (id == CHARTEVENT_OBJECT_ENDEDIT) {
         // ObjectLong.EventEdit(sparam);
         // ObjectShort.EventEdit(sparam);
-        BuilderManager.EventEdit(sparam);
+        BuilderManager.onEdit(sparam);
         // PositionReporter.CalcLevels();
         ChartRedraw();
         // ObjectLong.CalcLevels();
@@ -313,7 +313,7 @@ void OnChartEvent(int const id, long const &lparam, double const &dparam, string
         // ObjectShort.EventTradeClick(sparam);
         // PrintFormat("%s %s", __FUNCTION__,sparam);
         // PrintFormat("%s", __FUNCTION__);
-        BuilderManager.EventButton(sparam);
+        BuilderManager.onButton(sparam);
         // PositionReporter.CalcLevels();
         // PeriodCollection.ChangePeriod(sparam);
         ChartRedraw();

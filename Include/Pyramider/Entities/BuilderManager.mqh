@@ -45,7 +45,6 @@ class CBuilderManager final {
         ProportionsManager.UpdateProportions(PeriodCollection.Size());
         switch (PositionReporter.getPositionType()) {
             case CPositionReporter::EnumPositionType::LONG:
-                // printFormat("%s %s", __FUNCTION__, EnumToString(CPositionReporter::EnumPositionType::LONG));
                 LongBuilder.Draw();
                 LongBuilder.CalcLevels();
                 ShortBuilder.Hide();
@@ -65,25 +64,25 @@ class CBuilderManager final {
         PeriodCollection.Draw();
     }
 
-    void UpdatePrice() const {
+    void onTick() const {
         for (uint i{0}; i < TradeBuilders.Size(); ++i) {
-            TradeBuilders[i].UpdatePrice();
+            TradeBuilders[i].onTick();
             TradeBuilders[i].CalcLevels();
         }
     }
 
-    void EventEdit(string const &sparam) const {
+    void onEdit(string const &sparam) const {
         for (uint i{0}; i < TradeBuilders.Size(); ++i) {
-            if (TradeBuilders[i].EventEdit(sparam)) {
+            if (TradeBuilders[i].onEdit(sparam)) {
                 TradeBuilders[i].CalcLevels();
                 return;
             }
         }
     }
 
-    void EventButton(string const &sparam) {
+    void onButton(string const &sparam) {
         for (uint i{0}; i < TradeBuilders.Size(); ++i) {
-            if (TradeBuilders[i].EventButton(sparam)) {
+            if (TradeBuilders[i].onButton(sparam)) {
                 TradeBuilders[i].CalcLevels();
                 return;
             }

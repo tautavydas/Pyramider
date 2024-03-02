@@ -9,9 +9,9 @@ class ITradeBuilder {
    public:
     virtual void Hide() const = 0;
     virtual void Draw() = 0;
-    virtual void UpdatePrice() const = 0;
-    virtual bool EventEdit(string const &sparam) const = 0;
-    virtual bool EventButton(string const &sparam) = 0;
+    virtual void onTick() const = 0;
+    virtual bool onEdit(string const &sparam) const = 0;
+    virtual bool onButton(string const &sparam) = 0;
     virtual void CalcLevels() const = 0;
 };
 
@@ -66,9 +66,10 @@ class CTradeBuilder : public ITradeBuilder {
         delete DrawPositions;
     }
 
-    void UpdatePrice() const override {
+    void onTick() const override {
         // Trade.UpdatePrice();
-        CalcLevels();
+        // Price.UpdatePrice();
+        // CalcLevels();
     }
 
     void Draw() override {
@@ -91,7 +92,11 @@ class CTradeBuilder : public ITradeBuilder {
         Reset.Hide();
     }
 
-    bool EventButton(string const &sparam) {
+    bool onEdit(string const &sparam) const override {
+        return EditableCollection.onEdit(sparam);
+    }
+
+    bool onButton(string const &sparam) {
         if (Trade.name == sparam) {
             if (DrawDeals.State()) {
                 Trade.Hide();
@@ -145,11 +150,7 @@ class CTradeBuilder : public ITradeBuilder {
             return true;
         }
 
-        return EditableCollection.ChangeEdit(sparam);
-    }
-
-    bool EventEdit(string const &sparam) const override {
-        return EditableCollection.ProcessEdit(sparam);
+        return EditableCollection.onButton(sparam);
     }
 
     uint getCount() const {
@@ -159,11 +160,8 @@ class CTradeBuilder : public ITradeBuilder {
             profit{PositionReporter.getProfit()},
             swap{PositionReporter.getSwap()},
             price{PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue()},
-            // price{Price.getValue()},
             price_ratio{PriceRatio.getValue()},
-            // volume  {PositionReporter.getStatus() ? PositionReporter.getAvgVolume() : VolumeInit.getValue()},
             volume{Volume.getValue()},
-            // volume  {PositionReporter.getAvgVolume()},
             total_volume{volume + PositionReporter.getVolume()},
             notional{price * volume},
             notional_ratio{NotionalRatio.getValue()},
@@ -195,11 +193,8 @@ class CTradeBuilder : public ITradeBuilder {
                 profit{PositionReporter.getProfit()},
                 swap{PositionReporter.getSwap()},
                 price{PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue()},
-                // price{Price.getValue()},
                 price_ratio{PriceRatio.getValue()},
-                // volume  {PositionReporter.getStatus() ? PositionReporter.getAvgVolume() : VolumeInit.getValue()},
                 volume{Volume.getValue()},
-                // volume {PositionReporter.getAvgVolume()},
                 total_volume{volume + PositionReporter.getVolume()},
                 notional{price * volume},
                 notional_ratio{NotionalRatio.getValue()},

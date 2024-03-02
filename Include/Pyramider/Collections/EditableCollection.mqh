@@ -1,10 +1,10 @@
 // ###<Experts/Pyramider.mq5>
 
+#include <Pyramider/Actions/ClampNotionalRatio.mqh>
 #include <Pyramider/Actions/ClampPrice.mqh>
 #include <Pyramider/Actions/ClampPriceRatio.mqh>
 #include <Pyramider/Actions/ClampRestricted.mqh>
-#include <Pyramider/Actions/ClampValue.mqh>
-#include <Pyramider/Actions/ClampVolumeInit.mqh>
+#include <Pyramider/Actions/ClampVolume.mqh>
 #include <Pyramider/Objects/ChangeButton.mqh>
 
 template <typename ExtremumType>
@@ -19,8 +19,8 @@ class CEditableCollection final {
         CPair(CEditableObject const &editable_object, ChangeButtonType const &change_button)
             : EditableObject(&editable_object), ChangeButton(&change_button) {}
 
-        void ChangeValue() const {
-            EditableObject.changeValue(ChangeButton.Parameters.Operation);
+        void onButton() const {
+            EditableObject.onButton(ChangeButton.Parameters.Operation);
             ChangeButton.Unset();
         }
     };
@@ -38,10 +38,10 @@ class CEditableCollection final {
           MapEdit(new CHashMap<string, CEditableObject *>),
           ValueUp(new CHashMap<string, CPair<ChangeButton<ParametersStandard>> *>),
           ValueDown(new CHashMap<string, CPair<ChangeButton<ParametersShifted>> *>) {
-        Edits[0] = new CEditableObject(proportions_manager, new ClampPrice<ExtremumType>(position_type, 1 /*+ (position_type == POSITION_TYPE_BUY ? -0.05 : +0.05)*/), 2, position_type, "Price", Digits());
-        Edits[1] = new CEditableObject(proportions_manager, new ClampPriceRatio(position_type, 1 /*+ (position_type == POSITION_TYPE_BUY ? -0.05 : 0.05)*/), 5, position_type, "PriceRatio", uint(-round(log10(Point() / (position_type == POSITION_TYPE_BUY ? SymbolInfoDouble(Symbol(), SYMBOL_BID) : SymbolInfoDouble(Symbol(), SYMBOL_ASK))))));
-        Edits[2] = new CEditableObject(proportions_manager, new ClampVolumeInit(position_reporter), 8, position_type, "VolumeInit", uint(-log10(Volumes.VolumeMin)));
-        Edits[3] = new CEditableObject(proportions_manager, new ClampValue(notional_ratio, 1, DBL_MAX), 11, position_type, "NotionalRatio", NotionalRatioDigits);
+        Edits[0] = new CEditableObject(proportions_manager, new ClampPrice<ExtremumType>(position_type), 2, position_type, "Price", Digits());
+        Edits[1] = new CEditableObject(proportions_manager, new ClampPriceRatio(position_type), 5, position_type, "PriceRatio", uint(-round(log10(Point() / (position_type == POSITION_TYPE_BUY ? SymbolInfoDouble(Symbol(), SYMBOL_BID) : SymbolInfoDouble(Symbol(), SYMBOL_ASK))))));
+        Edits[2] = new CEditableObject(proportions_manager, new ClampVolume(position_reporter), 8, position_type, "VolumeInit", uint(-log10(Volumes.VolumeMin)));
+        Edits[3] = new CEditableObject(proportions_manager, new ClampNotionalRatio(), 11, position_type, "NotionalRatio", NotionalRatioDigits);
         Edits[4] = new CEditableObject(proportions_manager, new ClampRestricted<ExtremumType>(trade_builder), 18, position_type, "RestrictedTrades", 0);
 
         for (uint i{0}; i < Edits.Size(); ++i) {
@@ -91,25 +91,25 @@ class CEditableCollection final {
             Edits[i].Hide();
     }
 
-    bool ProcessEdit(string const &sparam) const {
+    bool onEdit(string const &sparam) const {
         CEditableObject *EditableObject;
         if (MapEdit.TryGetValue(sparam, EditableObject)) {
-            EditableObject.editValue();
+            EditableObject.onEdit();
             return true;
         }
         return false;
     }
 
-    bool ChangeEdit(string const &sparam) const {
+    bool onButton(string const &sparam) const {
         CPair<ChangeButton<ParametersStandard>> *PairUp;
         if (ValueUp.TryGetValue(sparam, PairUp)) {
-            PairUp.ChangeValue();
+            PairUp.onButton();
             return true;
         }
 
         CPair<ChangeButton<ParametersShifted>> *PairDown;
         if (ValueDown.TryGetValue(sparam, PairDown)) {
-            PairDown.ChangeValue();
+            PairDown.onButton();
             return true;
         }
 

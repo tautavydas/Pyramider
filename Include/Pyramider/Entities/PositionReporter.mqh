@@ -94,7 +94,6 @@ class CPositionReporter final {
             status = true;
             price = PositionGetDouble(POSITION_PRICE_OPEN);
             volume = PositionGetDouble(POSITION_VOLUME);
-            // PrintFormat("%s %u", __FUNCTION__, HistorySelectByPosition(PositionGetInteger(POSITION_TICKET)));
             avg_volume = volume / HistoryDealsTotal();
             profit = PositionGetDouble(POSITION_PROFIT);
             swap = PositionGetDouble(POSITION_SWAP);
@@ -103,7 +102,7 @@ class CPositionReporter final {
             status = false;
             double const zero{0};
             price = zero / zero;
-            volume = Volumes.VolumeMin;  // SymbolInfoDouble(Symbol(), SYMBOL_VOLUME_MIN);
+            volume = Volumes.VolumeMin;
             avg_volume = volume;
             profit = zero / zero;
             swap = zero / zero;

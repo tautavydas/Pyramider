@@ -8,5 +8,6 @@ class ActionButton : public StateObject<Parameters> {
                       action,
                       new Parameters(proportions_manager, coefX, position_type, 2, 1)) {}
 
-    // void UpdatePrice() const {/*PrintFormat("%s yo", __FUNCTION__);*//*Edit.SetValue();*/}
+    void UpdatePrice() const { /*PrintFormat("%s yo", __FUNCTION__);*/ /*Edit.SetValue();*/
+    }
 };
