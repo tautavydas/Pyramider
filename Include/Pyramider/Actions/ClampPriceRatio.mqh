@@ -5,7 +5,7 @@ class ClampPriceRatio final : public IAction {
 
    public:
     ClampPriceRatio(ENUM_POSITION_TYPE const position_type)
-        : m_default_value(1),
+        : m_default_value(1.0),
           m_lower_boundary(position_type == POSITION_TYPE_BUY ? 0 : m_default_value),
           m_higher_boundary(position_type == POSITION_TYPE_BUY ? m_default_value : DBL_MAX) {}
 

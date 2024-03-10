@@ -2,26 +2,26 @@
 #include <Pyramider/Actions/IAction.mqh>
 
 class CEditableObject final : public IDrawable {
-    color const border_color;
-    double const step;
-    bool BoolInit;
+    color const m_border_color;
+    double const m_step;
+    bool m_bool_init;
 
    public:
     IAction const *const Action;
     Parameters const *const Params;
     ChangeButton<ParametersStandard> *const ValueUp;
     ChangeButton<ParametersShifted> *const ValueDown;
-    uint const digits;
-    CEditableObject(CProportionsManager const &proportions_manager, IAction const &action, uint const coefX, ENUM_POSITION_TYPE const position_type, string const name_, uint const digits_)
+    uint const m_digits;
+    CEditableObject(CProportionsManager const &proportions_manager, IAction const &action, uint const coefX, ENUM_POSITION_TYPE const position_type, string const name_, uint const digits)
         : IDrawable(OBJ_EDIT, (position_type == POSITION_TYPE_BUY ? "Long" : "Short") + name_, name_, position_type == POSITION_TYPE_BUY ? clrBlue : clrRed, clrLightGray),
-          border_color(clrGray),
-          step(pow(10.0, -double(digits_))),
-          BoolInit(true),
-          Action(GetPointer(action)),
+          m_border_color(clrGray),
+          m_step(pow(10.0, -double(digits))),
+          m_bool_init(true),
+          Action(&action),
           Params(new Parameters(proportions_manager, coefX, position_type, 2, 1)),
           ValueUp(new ChangeButton<ParametersStandard>(proportions_manager, coefX, position_type, name)),
           ValueDown(new ChangeButton<ParametersShifted>(proportions_manager, coefX, position_type, name)),
-          digits(digits_) {}
+          m_digits(digits) {}
 
     ~CEditableObject() {
         delete Action;
@@ -32,13 +32,13 @@ class CEditableObject final : public IDrawable {
 
     void Draw() {
         IDrawable::Draw();
-        ObjectSetInteger(ChartID(), name, OBJPROP_BORDER_COLOR, border_color);
+        ObjectSetInteger(ChartID(), name, OBJPROP_BORDER_COLOR, m_border_color);
         ValueUp.Draw();
         ValueDown.Draw();
         Params.Draw(name);
-        if (BoolInit) {
+        if (m_bool_init) {
             setText(Action.onInit());
-            BoolInit = false;
+            m_bool_init = false;
         }
     }
 
@@ -46,7 +46,7 @@ class CEditableObject final : public IDrawable {
         IDrawable::Hide();
         ValueUp.Hide();
         ValueDown.Hide();
-        BoolInit = true;
+        m_bool_init = true;
     }
 
     double getValue() const {
@@ -58,7 +58,7 @@ class CEditableObject final : public IDrawable {
     }
 
     void onButton(OperationPtr const &Operation) const {
-        setText(Action.clamp(Operation(getValue(), step)));
+        setText(Action.clamp(Operation(getValue(), m_step)));
     }
 
    private:
@@ -66,6 +66,6 @@ class CEditableObject final : public IDrawable {
     //     setText(Action.onTick(getValue()));
     // }
     void setText(double const display_value) const {
-        ObjectSetString(ChartID(), name, OBJPROP_TEXT, StringFormat("%.*f", digits, display_value));
+        ObjectSetString(ChartID(), name, OBJPROP_TEXT, StringFormat("%.*f", m_digits, display_value));
     }
 };

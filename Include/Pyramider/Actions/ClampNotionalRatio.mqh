@@ -7,7 +7,7 @@ class ClampNotionalRatio final : public IAction {
 
    public:
     ClampNotionalRatio()
-        : m_lower_boundary(1),
+        : m_lower_boundary(1.0),
           m_higher_boundary(DBL_MAX) {}
 
     double onInit() const override { return m_lower_boundary; }

@@ -20,7 +20,7 @@ class CTradeBuilder : public ITradeBuilder {
     CConverter const *const Converter;
     CPositionReporter *const PositionReporter;
     ExtremumType const MinMax;
-    ENUM_SYMBOL_INFO_DOUBLE const Quote;
+    ENUM_SYMBOL_INFO_DOUBLE const m_quote;
     CEditableCollection<ExtremumType> *const EditableCollection;
     CEditableObject *const RestrictedDeals,
         const *const Price,
@@ -30,32 +30,31 @@ class CTradeBuilder : public ITradeBuilder {
     DrawButton *const DrawDeals, *const DrawPositions;
     ActionButton *const Trade, *const Reset;
 
-    ENUM_ORDER_TYPE const Type;
-    int const Direction;
-    bool ResetBool;
+    ENUM_ORDER_TYPE const m_type;
+    int const m_direction;
+    bool m_reset_bool;
 
    public:
     CTradeBuilder(CProportionsManager const &proportions_manager,
                   CPositionReporter &position_reporter,
-                  ENUM_POSITION_TYPE const position_type,
-                  double const notional_ratio)
+                  ENUM_POSITION_TYPE const position_type)
         : PositionReporter(&position_reporter),
           Converter(new CConverter(SymbolInfoString(Symbol(), SYMBOL_CURRENCY_PROFIT), "USD", AccountInfoString(ACCOUNT_CURRENCY))),
-          Quote(position_type == POSITION_TYPE_BUY ? SYMBOL_ASK : SYMBOL_BID),
-          EditableCollection(new CEditableCollection<ExtremumType>(proportions_manager, position_reporter, position_type, notional_ratio, this)),
+          m_quote(position_type == POSITION_TYPE_BUY ? SYMBOL_ASK : SYMBOL_BID),
+          EditableCollection(new CEditableCollection<ExtremumType>(proportions_manager, position_reporter, position_type, this)),
           Price(EditableCollection[0]),
           PriceRatio(EditableCollection[1]),
           Volume(EditableCollection[2]),
           NotionalRatio(EditableCollection[3]),
           RestrictedDeals(EditableCollection[4]),
-          DrawDeals(new DrawButton(proportions_manager, 14, position_type, "Deals", Volume.digits)),
-          DrawPositions(new DrawButton(proportions_manager, 16, position_type, "Positions", Volume.digits)),
+          DrawDeals(new DrawButton(proportions_manager, 14, position_type, "Deals", Volume.m_digits)),
+          DrawPositions(new DrawButton(proportions_manager, 16, position_type, "Positions", Volume.m_digits)),
           Trade(new ActionButton(proportions_manager, 0, position_type, "Trade")),
           Reset(new ActionButton(proportions_manager, 0, position_type, "Reset")),
 
-          Type(position_type == POSITION_TYPE_BUY ? ORDER_TYPE_BUY_LIMIT : ORDER_TYPE_SELL_LIMIT),
-          Direction(position_type == POSITION_TYPE_BUY ? -1 : 1),
-          ResetBool(true) {}
+          m_type(position_type == POSITION_TYPE_BUY ? ORDER_TYPE_BUY_LIMIT : ORDER_TYPE_SELL_LIMIT),
+          m_direction(position_type == POSITION_TYPE_BUY ? -1 : 1),
+          m_reset_bool(true) {}
 
     ~CTradeBuilder() {
         delete Converter;
@@ -109,7 +108,7 @@ class CTradeBuilder : public ITradeBuilder {
                 }
                 Reset.Draw();
             }
-            ResetBool = true;
+            m_reset_bool = true;
             return true;
         } else if (Reset.name == sparam) {
             Reset.Hide();
@@ -118,18 +117,18 @@ class CTradeBuilder : public ITradeBuilder {
             EditableCollection.Draw();
             for (int i{OrdersTotal() - 1}; i >= 0; i--) {
                 ulong const order_ticket{OrderGetTicket(i)}, const magic_number{OrderGetInteger(ORDER_MAGIC)}, const order_type{OrderGetInteger(ORDER_TYPE)};
-                // PrintFormat("%s %ld %ld %s %s", __FUNCTION__, magic_number, Magic.Number, EnumToString(ENUM_ORDER_TYPE(order_type)), EnumToString(ENUM_ORDER_TYPE(Type)));
-                if (magic_number == Magic.Number && order_type == Type) {
-                    MqlTradeRequest const Request{TRADE_ACTION_REMOVE, magic_number, order_ticket, Symbol(), 0, 0, 0, 0, 0, 0, Type, ORDER_FILLING_FOK, 0, 0, "set your systems volume control slightly above the normal listening level", 0, 0};
+                // PrintFormat("%s %ld %ld %s %s", __FUNCTION__, magic_number, Magic.Number, EnumToString(ENUM_ORDER_TYPE(order_type)), EnumToString(ENUM_ORDER_TYPE(m_type)));
+                if (magic_number == Magic.Number && order_type == m_type) {
+                    MqlTradeRequest const Request{TRADE_ACTION_REMOVE, magic_number, order_ticket, Symbol(), 0, 0, 0, 0, 0, 0, m_type, ORDER_FILLING_FOK, 0, 0, "set your systems volume control slightly above the normal listening level", 0, 0};
                     Send(Request);
                 }
             }
         } else if (DrawDeals.name == sparam || DrawPositions.name == sparam) {
             bool const draw_deals{DrawDeals.State()}, const draw_positions{DrawPositions.State()};
             if (draw_deals || draw_positions) {
-                if (ResetBool) {
+                if (m_reset_bool) {
                     RestrictedDeals.Draw();
-                    ResetBool = false;
+                    m_reset_bool = false;
                 }
                 if (draw_deals) {
                     Trade.Draw();
@@ -137,7 +136,7 @@ class CTradeBuilder : public ITradeBuilder {
             } else {
                 RestrictedDeals.Hide();
                 Trade.Hide();
-                ResetBool = true;
+                m_reset_bool = true;
             }
 
             if (!draw_deals) {
@@ -154,28 +153,27 @@ class CTradeBuilder : public ITradeBuilder {
     }
 
     uint getCount() const {
-        double balance{PositionReporter.getBalance()},
+        double const balance{PositionReporter.getBalance()},
             equity{PositionReporter.getEquity()},
             margin{PositionReporter.getMargin()},
             profit{PositionReporter.getProfit()},
             swap{PositionReporter.getSwap()},
-            price{PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue()},
             price_ratio{PriceRatio.getValue()},
-            volume{Volume.getValue()},
-            total_volume{volume + PositionReporter.getVolume()},
-            notional{price * volume},
-            notional_ratio{NotionalRatio.getValue()},
-            total_notional{notional + price * PositionReporter.getVolume()},
-            Margin{Converter.QuoteToDeposit(total_notional * Contract / Leverage, Quote)};
+            notional_ratio{NotionalRatio.getValue()};
+        double
+            price{PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue()},
+            volume{Volume.getValue()}, volume_total{volume},
+            notional{price * volume}, notional_total{notional},
+            Margin{Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote)};
 
         uint counter{0};
-        while (Margin * MarginCall < equity && total_volume < Volumes.VolumeLimit && counter < AccountInfoInteger(ACCOUNT_LIMIT_ORDERS)) {
-            price = fmax(0, MinMax.process(price * price_ratio, price + Direction * Point()));
+        while (Margin * MarginCall < equity && volume_total < Volumes.VolumeLimit && counter < AccountInfoInteger(ACCOUNT_LIMIT_ORDERS)) {
+            price = fmax(0, MinMax.process(price * price_ratio, price + m_direction * Point()));
             notional *= notional_ratio;
             volume = floor(notional / price / Volumes.VolumeStep) * Volumes.VolumeStep;
-            total_volume += volume;
-            total_notional += volume * price;
-            Margin += Converter.QuoteToDeposit(total_notional * Contract / Leverage, Quote);
+            volume_total += volume;
+            notional_total += volume * price;
+            Margin += Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote);
             ++counter;
         }
 
@@ -187,44 +185,34 @@ class CTradeBuilder : public ITradeBuilder {
     void CalcLevels() const {
         bool const state_deals{DrawDeals.State()}, const state_positions{DrawPositions.State()};
         if (state_deals || state_positions) {
-            double balance{PositionReporter.getBalance()},
+            double const balance{PositionReporter.getBalance()},
                 equity{PositionReporter.getEquity()},
                 margin{PositionReporter.getMargin()},
                 profit{PositionReporter.getProfit()},
                 swap{PositionReporter.getSwap()},
-                price{PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue()},
                 price_ratio{PriceRatio.getValue()},
-                volume{Volume.getValue()},
-                total_volume{volume + PositionReporter.getVolume()},
-                notional{price * volume},
-                notional_ratio{NotionalRatio.getValue()},
-                total_notional{notional + price * PositionReporter.getVolume()},
-                Margin{Converter.QuoteToDeposit(total_notional * Contract / Leverage, Quote)};
+                notional_ratio{NotionalRatio.getValue()};
+            double
+                price{PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue()},
+                volume{Volume.getValue()}, volume_total{volume},
+                notional{price * volume}, notional_total{notional},
+                Margin{Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote)};
 
-            // PrintFormat("%s %f %f %f | %f", __FUNCTION__, PositionReporter.getPrice(), PositionReporter.getVolume(), PositionReporter.getPrice() * PositionReporter.getVolume(), total_notional);
-            // PrintFormat("%f %f %f", price, PositionReporter.getPrice(), Price.getValue());
-
-            // PrintFormat("%s %s %f | %f %f %f %f | %f %f %f | %f %f | %u", __FUNCTION__, string(PositionReporter.getStatus()), price, SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW), SymbolInfoDouble(Symbol(), SYMBOL_BIDHIGH), SymbolInfoDouble(Symbol(), SYMBOL_ASKLOW), SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH), SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH) - SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW), (SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH) - SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW)) / Point(), Point() / (SymbolInfoDouble(Symbol(), SYMBOL_ASKHIGH) - SymbolInfoDouble(Symbol(), SYMBOL_BIDLOW)), Point(), SymbolInfoDouble(Symbol(), SYMBOL_POINT), SymbolInfoInteger(Symbol(), SYMBOL_DIGITS));
-
-            // if (state_deals    ) DrawDeals    .ResetCounter();
-            // if (state_positions) DrawPositions.ResetCounter();
-            // PrintFormat("%s equity %f margin %f profit %f swap %f price %f price_ratio %f volume %f total_volume %f notional %f notional_ratio %f total_notional %f Margin %f", __FUNCTION__, equity, margin, profit, swap, price, price_ratio, volume, total_volume, notional, notional_ratio, total_notional, Margin);
-            // PrintFormat("%s total_notional %f = notional % * ", __FUNCTION__, total_notional, );
             DrawDeals.ResetCounter();
             DrawPositions.ResetCounter();
-            while (Margin * MarginCall < equity && total_volume < Volumes.VolumeLimit && fmax(DrawDeals.SizeCounter(), DrawPositions.SizeCounter()) < AccountInfoInteger(ACCOUNT_LIMIT_ORDERS)) {
+            while (Margin * MarginCall < equity && volume_total < Volumes.VolumeLimit && fmax(DrawDeals.SizeCounter(), DrawPositions.SizeCounter()) < AccountInfoInteger(ACCOUNT_LIMIT_ORDERS)) {
                 if (state_deals)
                     DrawDeals.Push(price, volume);
                 if (state_positions)
-                    DrawPositions.Push(total_notional / total_volume, total_volume);
+                    DrawPositions.Push(notional_total / volume_total, volume_total);
 
-                price = fmax(0, MinMax.process(price * price_ratio, price + Direction * Point()));
+                price = fmax(0, MinMax.process(price * price_ratio, price + m_direction * Point()));
                 notional *= notional_ratio;
 
                 volume = fmax(floor(notional / price / Volumes.VolumeStep) * Volumes.VolumeStep, Volumes.VolumeStep);
-                total_volume += volume;
-                total_notional += volume * price;
-                Margin += Converter.QuoteToDeposit(total_notional * Contract / Leverage, Quote);
+                volume_total += volume;
+                notional_total += volume * price;
+                Margin += Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote);
             }
             uint const restricted_deals{uint(
                 RestrictedDeals.getValue())};
@@ -239,13 +227,14 @@ class CTradeBuilder : public ITradeBuilder {
     }
 
    private:
-    void TradeLine(uint const counter) const {
+    void
+    TradeLine(uint const counter) const {
         double rest_volume{DrawDeals.Levels[counter].volume}, curr_volume{rest_volume};
         for (uint i{0}, num_iter{uint(floor(DrawDeals.Levels[counter].volume / Volumes.VolumeMax))}; i <= num_iter; ++i) {
             curr_volume = Volumes.VolumeMax <= rest_volume ? Volumes.VolumeMax : rest_volume;
             rest_volume -= curr_volume;
 
-            MqlTradeRequest const Request{TRADE_ACTION_PENDING, Magic.Number, 0, Symbol(), curr_volume, DrawDeals.Levels[counter].price, 0, 0, 0, 0, Type, ORDER_FILLING_FOK, 0, 0, DrawDeals.Name(counter), 0, 0};
+            MqlTradeRequest const Request{TRADE_ACTION_PENDING, Magic.Number, 0, Symbol(), curr_volume, DrawDeals.Levels[counter].price, 0, 0, 0, 0, m_type, ORDER_FILLING_FOK, 0, 0, DrawDeals.Name(counter), 0, 0};
             Send(Request);
         }
     }
@@ -268,53 +257,11 @@ class CTradeBuilder : public ITradeBuilder {
     bool orderExists() const {
         for (int i{OrdersTotal() - 1}; i >= 0; i--) {
             OrderGetTicket(i);
-            if (Magic.Number == OrderGetInteger(ORDER_MAGIC) && Type == OrderGetInteger(ORDER_TYPE)) {
+            if (Magic.Number == OrderGetInteger(ORDER_MAGIC) && m_type == OrderGetInteger(ORDER_TYPE)) {
                 return true;
             }
         }
 
         return false;
     }
-    /*double ExtremumExtremum(double const val) {
-      if (SmartPosition.getStatus()) {
-        return Extremum.process(Extremum.process(SmartPosition.getPrice(), SymbolInfoDouble(Symbol(), QuoteIn)), val);
-      } else {
-        return Extremum.process(SymbolInfoDouble(Symbol(), QuoteIn), val);
-      }
-    }*/
-
-    /*double clampPrice(double const val) const {
-      return fmax(0, val);
-    }*/
-
-    /*double clampPriceRatio(double const val) const {
-      return fmax(PriceRatioLimitLow, fmin(PriceRatioLimitHigh, val));
-    }*/
-
-    /*double clampVolumeInit(double const val) const {
-      return fmax(SymbolInfoDouble(Symbol(), SYMBOL_VOLUME_MIN), val);
-    }*/
-
-    /*double clampNotionalRatio(double const val) const {
-      return fmax(1, val);
-    }*/
-
-    /*void DrawLine(string const type, uint const counter, double const price, string const tooltip, double const value, color const colour) const {
-       string const deal_name{StringFormat("%s%s %u", Name, type, counter)};
-       ObjectCreate    (ChartID(), deal_name, OBJ_HLINE, 0, 0, price);
-       ObjectSetString (ChartID(), deal_name, OBJPROP_TEXT, StringFormat("%.*f", DigitS, value));
-       ObjectSetString (ChartID(), deal_name, OBJPROP_TOOLTIP, StringFormat("%s %s %.*f", deal_name, tooltip, DigitS, value));
-       ObjectSetInteger(ChartID(), deal_name, OBJPROP_ZORDER, 0);
-       ObjectSetInteger(ChartID(), deal_name, OBJPROP_BACK, true);
-       ObjectSetInteger(ChartID(), deal_name, OBJPROP_COLOR, colour);
-       ObjectSetInteger(ChartID(), deal_name, OBJPROP_STYLE, STYLE_DOT);
-    }
-
-    bool DeleteLine(string const type, uint const counter) const {
-      bool const found{ObjectFind(ChartID(), StringFormat("%s%s %u", Name, type, counter)) >= 0};
-      if (found) {
-        ObjectDelete(ChartID(), StringFormat("%s%s %u", Name, type, counter));
-      }
-      return found;
-    }*/
 };

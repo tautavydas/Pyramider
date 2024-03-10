@@ -7,12 +7,13 @@
 #include <Generic/HashMap.mqh>
 
 input double  // PriceRatioLong = 1, PriceRatioShort = 1,
-    NotionalRatioLong = 1,
-    NotionalRatioShort = 1,
+              // NotionalRatioLong = 1,
+    // NotionalRatioShort = 1,
     // ProfitRatioLong = 1, ProfitRatioShort = 1,
-    Xproportions = 0.025, Yproportions = 0.1;
+    Xproportions = 0.025,
+    Yproportions = 0.1;
 // input uint PriceRatioDigits    = 3    , NotionalRatioDigits = 2;
-input uint NotionalRatioDigits = 2;
+// input uint NotionalRatioDigits = 2;
 
 /*class CDigitManager final {
   uint price_ratio_digits, notional_ratio_digits;

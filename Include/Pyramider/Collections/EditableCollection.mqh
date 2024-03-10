@@ -33,16 +33,22 @@ class CEditableCollection final {
     CHashMap<string, CPair<ChangeButton<ParametersShifted>> *> *const ValueDown;
 
    public:
-    CEditableCollection(CProportionsManager const &proportions_manager, CPositionReporter &position_reporter, ENUM_POSITION_TYPE const position_type, double const notional_ratio, CTradeBuilder<ExtremumType> const &trade_builder)
+    CEditableCollection(CProportionsManager const &proportions_manager, CPositionReporter &position_reporter, ENUM_POSITION_TYPE const position_type, CTradeBuilder<ExtremumType> const &trade_builder)
         : PositionReporter(&position_reporter),
           MapEdit(new CHashMap<string, CEditableObject *>),
           ValueUp(new CHashMap<string, CPair<ChangeButton<ParametersStandard>> *>),
           ValueDown(new CHashMap<string, CPair<ChangeButton<ParametersShifted>> *>) {
+        uint const
+            price_digits{uint(ceil(fabs(log10(Point() / (position_type == POSITION_TYPE_BUY ? SymbolInfoDouble(Symbol(), SYMBOL_BID) : SymbolInfoDouble(Symbol(), SYMBOL_ASK))))))},
+            volume_digits{uint(ceil(fabs(log10(Volumes.VolumeMin))))},
+            notional_digits{3},
+            restricted_digits{0};
+
         Edits[0] = new CEditableObject(proportions_manager, new ClampPrice<ExtremumType>(position_type), 2, position_type, "Price", Digits());
-        Edits[1] = new CEditableObject(proportions_manager, new ClampPriceRatio(position_type), 5, position_type, "PriceRatio", uint(-round(log10(Point() / (position_type == POSITION_TYPE_BUY ? SymbolInfoDouble(Symbol(), SYMBOL_BID) : SymbolInfoDouble(Symbol(), SYMBOL_ASK))))));
-        Edits[2] = new CEditableObject(proportions_manager, new ClampVolume(position_reporter), 8, position_type, "VolumeInit", uint(-log10(Volumes.VolumeMin)));
-        Edits[3] = new CEditableObject(proportions_manager, new ClampNotionalRatio(), 11, position_type, "NotionalRatio", NotionalRatioDigits);
-        Edits[4] = new CEditableObject(proportions_manager, new ClampRestricted<ExtremumType>(trade_builder), 18, position_type, "RestrictedTrades", 0);
+        Edits[1] = new CEditableObject(proportions_manager, new ClampPriceRatio(position_type), 5, position_type, "PriceRatio", price_digits);
+        Edits[2] = new CEditableObject(proportions_manager, new ClampVolume(position_reporter), 8, position_type, "VolumeInit", volume_digits);
+        Edits[3] = new CEditableObject(proportions_manager, new ClampNotionalRatio(), 11, position_type, "NotionalRatio", notional_digits);
+        Edits[4] = new CEditableObject(proportions_manager, new ClampRestricted<ExtremumType>(trade_builder), 18, position_type, "RestrictedTrades", restricted_digits);
 
         for (uint i{0}; i < Edits.Size(); ++i) {
             MapEdit.Add(Edits[i].name, Edits[i]);

@@ -29,8 +29,8 @@ class CBuilderManager final {
         : m_Xproportions(Xproportions),
           m_Yproportions(Yproportions),
           PeriodCollection(new CPeriodCollection(ProportionsManager)),
-          LongBuilder(new CTradeBuilder<ExtremumMin>(ProportionsManager, PositionReporter, POSITION_TYPE_BUY, NotionalRatioLong)),
-          ShortBuilder(new CTradeBuilder<ExtremumMax>(ProportionsManager, PositionReporter, POSITION_TYPE_SELL, NotionalRatioShort)) {
+          LongBuilder(new CTradeBuilder<ExtremumMin>(ProportionsManager, PositionReporter, POSITION_TYPE_BUY)),
+          ShortBuilder(new CTradeBuilder<ExtremumMax>(ProportionsManager, PositionReporter, POSITION_TYPE_SELL)) {
         TradeBuilders[0] = LongBuilder;
         TradeBuilders[1] = ShortBuilder;
     }
