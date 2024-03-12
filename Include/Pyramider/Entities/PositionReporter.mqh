@@ -10,7 +10,7 @@ class CPositionReporter final {
 
    private:
     bool m_status;
-    double m_balance, m_equity, margin, price, volume, /*avg_volume,*/ profit, swap;
+    double m_balance, m_equity, m_margin, m_price, m_volume, /*avg_volume,*/ m_profit, m_swap;
 
    public:
     /*void CalcLevels() const {
@@ -56,15 +56,15 @@ class CPositionReporter final {
 
     double getEquity() const { return m_equity; }
 
-    double getMargin() const { return margin; }
+    double getMargin() const { return m_margin; }
 
-    double getProfit() const { return profit; }
+    double getProfit() const { return m_profit; }
 
-    double getSwap() const { return swap; }
+    double getSwap() const { return m_swap; }
 
-    double getPrice() const { return price; }
+    double getPrice() const { return m_price; }
 
-    double getVolume() const { return volume; }
+    double getVolume() const { return m_volume; }
 
     // double getAvgVolume() const { return avg_volume; }
 
@@ -83,29 +83,29 @@ class CPositionReporter final {
         if (PositionsTotal()) {
             m_balance = AccountInfoDouble(ACCOUNT_BALANCE) / PositionsTotal();
             m_equity = AccountInfoDouble(ACCOUNT_EQUITY) / PositionsTotal();
-            margin = AccountInfoDouble(ACCOUNT_MARGIN) / PositionsTotal();
+            m_margin = AccountInfoDouble(ACCOUNT_MARGIN) / PositionsTotal();
         } else {
             m_balance = AccountInfoDouble(ACCOUNT_BALANCE);
             m_equity = AccountInfoDouble(ACCOUNT_EQUITY);
-            margin = AccountInfoDouble(ACCOUNT_MARGIN);
+            m_margin = AccountInfoDouble(ACCOUNT_MARGIN);
         }
 
         if (PositionSelect(Symbol()) && HistorySelectByPosition(PositionGetInteger(POSITION_TICKET))) {
             m_status = true;
-            price = PositionGetDouble(POSITION_PRICE_OPEN);
-            volume = PositionGetDouble(POSITION_VOLUME) / HistoryDealsTotal();
+            m_price = PositionGetDouble(POSITION_PRICE_OPEN);
+            m_volume = PositionGetDouble(POSITION_VOLUME) / HistoryDealsTotal();
             // avg_volume = volume / HistoryDealsTotal();
-            profit = PositionGetDouble(POSITION_PROFIT);
-            swap = PositionGetDouble(POSITION_SWAP);
+            m_profit = PositionGetDouble(POSITION_PROFIT);
+            m_swap = PositionGetDouble(POSITION_SWAP);
             return EnumPositionType(PositionGetInteger(POSITION_TYPE));
         } else {
             m_status = false;
             double const zero{0};
-            price = zero / zero;
-            volume = Volumes.VolumeMin;
+            m_price = zero / zero;
+            m_volume = Volumes.VolumeMin;
             // avg_volume = volume;
-            profit = zero / zero;
-            swap = zero / zero;
+            m_profit = zero / zero;
+            m_swap = zero / zero;
             return EnumPositionType::NONE;
         }
     }

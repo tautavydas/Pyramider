@@ -17,6 +17,7 @@ class ExtremumMax final {
 
 class CBuilderManager final {
     double m_Xproportions, m_Yproportions;
+    int m_position_total;
     CProportionsManager ProportionsManager;
     CPositionReporter PositionReporter;
     CPeriodCollection *PeriodCollection;
@@ -28,6 +29,7 @@ class CBuilderManager final {
     CBuilderManager()
         : m_Xproportions(Xproportions),
           m_Yproportions(Yproportions),
+          m_position_total(PositionsTotal()),
           PeriodCollection(new CPeriodCollection(ProportionsManager)),
           LongBuilder(new CTradeBuilder<ExtremumMin>(ProportionsManager, PositionReporter, POSITION_TYPE_BUY)),
           ShortBuilder(new CTradeBuilder<ExtremumMax>(ProportionsManager, PositionReporter, POSITION_TYPE_SELL)) {
@@ -89,4 +91,20 @@ class CBuilderManager final {
         }
         PeriodCollection.ChangePeriod(sparam);
     }
+
+    bool isNewPosition() {
+        if (m_position_total != PositionsTotal()) {
+            m_position_total = PositionsTotal();
+
+            return true;
+        }
+
+        return false;
+    }
+
+    // void onTrade() {
+    //     for (uint i{0}; i < TradeBuilders.Size(); ++i) {
+    //         TradeBuilders[i].onTrade();
+    //     }
+    // }
 };

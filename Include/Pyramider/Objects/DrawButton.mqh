@@ -4,26 +4,26 @@ class DrawButton final : public StateObject<Parameters> {
    public:
     class Pair final {
        public:
-        double price, volume;
-        Pair(double const price_, double const volume_)
-            : price(price_), volume(volume_) {}
+        double m_price, m_volume;
+        Pair(double const price, double const volume)
+            : m_price(price), m_volume(volume) {}
     }* Levels[];
 
-    string const line_tooltip;
-    color const colour;
-    uint const digits;
+    string const m_line_tooltip;
+    color const m_colour;
+    uint const m_digits;
 
    public:
-    uint counter;
-    DrawButton(CProportionsManager const& proportions_manager, uint const coefX, ENUM_POSITION_TYPE const position_type, string const action, uint const digits_)
+    uint m_counter;
+    DrawButton(CProportionsManager const& proportions_manager, uint const coefX, ENUM_POSITION_TYPE const position_type, string const action, uint const digits)
         : StateObject((position_type == POSITION_TYPE_BUY ? "Long" : "Short") + action,
                       (position_type == POSITION_TYPE_BUY ? "Long" : "Short") + action,
                       action,
                       new Parameters(proportions_manager, coefX, position_type, 2, 1)),
-          counter(0),
-          line_tooltip(action == "Deals" ? "trade_volume" : "total_volume"),
-          colour(action == "Deals" ? (position_type == POSITION_TYPE_BUY ? Cyan : Orange) : (position_type == POSITION_TYPE_BUY ? Violet : Red)),
-          digits(digits_) {}
+          m_counter(0),
+          m_line_tooltip(action == "Deals" ? "trade_volume" : "total_volume"),
+          m_colour(action == "Deals" ? (position_type == POSITION_TYPE_BUY ? Cyan : Orange) : (position_type == POSITION_TYPE_BUY ? Violet : Red)),
+          m_digits(digits) {}
 
     ~DrawButton() {
         delete Parameters;
@@ -36,17 +36,17 @@ class DrawButton final : public StateObject<Parameters> {
         DeleteLines();
     }
 
-    void ResetCounter() { counter = 0; }
-    uint SizeCounter() { return counter; }
+    void ResetCounter() { m_counter = 0; }
+    uint SizeCounter() { return m_counter; }
 
     void Push(double const price, double const volume) {
-        if (counter < Levels.Size()) {
-            Levels[counter].price = price;
-            Levels[counter].volume = volume;
-            ++counter;
+        if (m_counter < Levels.Size()) {
+            Levels[m_counter].m_price = price;
+            Levels[m_counter].m_volume = volume;
+            ++m_counter;
         } else {
             if (Levels.Push(new Pair(price, volume)))
-                ++counter;
+                ++m_counter;
             else {
                 PrintFormat("%s WTF", __FUNCTION__);
             }
@@ -54,7 +54,7 @@ class DrawButton final : public StateObject<Parameters> {
     }
 
     void Drop(uint const count) {
-        counter -= fmin(counter, count);
+        m_counter -= fmin(m_counter, count);
     }
 
     void DeleteLevels() {
@@ -65,7 +65,7 @@ class DrawButton final : public StateObject<Parameters> {
 
     void DrawLines() {
         uint cnt{0};
-        for (; cnt < counter; ++cnt) {
+        for (; cnt < m_counter; ++cnt) {
             DrawLine(cnt);
         }
         DeleteExcessLines(cnt);
@@ -73,7 +73,7 @@ class DrawButton final : public StateObject<Parameters> {
 
     void DeleteLines() {
         uint cnt{0};
-        for (; cnt < counter; ++cnt) {
+        for (; cnt < m_counter; ++cnt) {
             // DeleteLine(cnt);
             ObjectDelete(ChartID(), Name(cnt));
         }
@@ -100,11 +100,11 @@ class DrawButton final : public StateObject<Parameters> {
    private:
     void DrawLine(uint const cnt) {
         string const deal_name{Name(cnt)};
-        ObjectCreate(ChartID(), deal_name, OBJ_HLINE, 0, 0, Levels[cnt].price);
-        ObjectSetString(ChartID(), deal_name, OBJPROP_TOOLTIP, StringFormat("%s %s %.*f", deal_name, line_tooltip, digits, Levels[cnt].volume));
+        ObjectCreate(ChartID(), deal_name, OBJ_HLINE, 0, 0, Levels[cnt].m_price);
+        ObjectSetString(ChartID(), deal_name, OBJPROP_TOOLTIP, StringFormat("%s %s %.*f", deal_name, m_line_tooltip, m_digits, Levels[cnt].m_volume));
         ObjectSetInteger(ChartID(), deal_name, OBJPROP_ZORDER, 0);
         ObjectSetInteger(ChartID(), deal_name, OBJPROP_BACK, true);
-        ObjectSetInteger(ChartID(), deal_name, OBJPROP_COLOR, colour);
+        ObjectSetInteger(ChartID(), deal_name, OBJPROP_COLOR, m_colour);
         ObjectSetInteger(ChartID(), deal_name, OBJPROP_STYLE, STYLE_DOT);
     }
 
@@ -119,7 +119,7 @@ class DrawButton final : public StateObject<Parameters> {
     }*/
 
     void DeleteExcessLines(uint cnt) {
-        if (counter < Levels.Size()) {
+        if (m_counter < Levels.Size()) {
             for (; cnt < Levels.Size(); ++cnt) {
                 // DeleteLine(cnt);
                 ObjectDelete(ChartID(), Name(cnt));
@@ -128,11 +128,11 @@ class DrawButton final : public StateObject<Parameters> {
     }
 
     void DeleteExcessLevels(uint cnt) {
-        if (counter < Levels.Size()) {
+        if (m_counter < Levels.Size()) {
             for (; cnt < Levels.Size(); ++cnt) {
                 delete Levels[cnt];
             }
-            ArrayResize(Levels, counter);
+            ArrayResize(Levels, m_counter);
         }
     }
 };

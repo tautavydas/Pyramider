@@ -162,6 +162,16 @@ void OnTrade() {
     // Refresh();
     // PositionReporter.Refresh();
     // PositionReporter.SetGeometry(0.025, 0.05);
+    // BuilderManager.onTrade();
+    // PositionReporter.getPositionType();
+
+    // PrintFormat("%d", PositionsTotal());
+
+    if (BuilderManager.isNewPosition()) {
+        PrintFormat("%s 1", __FUNCTION__);
+    } else {
+        PrintFormat("%s 2", __FUNCTION__);
+    }
 }
 
 void OnTradeTransaction(MqlTradeTransaction const &transaction, MqlTradeRequest const &request, MqlTradeResult const &result) {
