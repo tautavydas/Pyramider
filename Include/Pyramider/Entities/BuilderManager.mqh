@@ -17,7 +17,8 @@ class ExtremumMax final {
 
 class CBuilderManager final {
     double m_Xproportions, m_Yproportions;
-    int m_position_total;
+    // int m_history_orders_total;
+    bool m_old_status;
     CProportionsManager ProportionsManager;
     CPositionReporter PositionReporter;
     CPeriodCollection *PeriodCollection;
@@ -29,10 +30,14 @@ class CBuilderManager final {
     CBuilderManager()
         : m_Xproportions(Xproportions),
           m_Yproportions(Yproportions),
-          m_position_total(PositionsTotal()),
+          m_old_status(PositionReporter.getStatus()),
           PeriodCollection(new CPeriodCollection(ProportionsManager)),
           LongBuilder(new CTradeBuilder<ExtremumMin>(ProportionsManager, PositionReporter, POSITION_TYPE_BUY)),
           ShortBuilder(new CTradeBuilder<ExtremumMax>(ProportionsManager, PositionReporter, POSITION_TYPE_SELL)) {
+        // PositionSelect(Symbol());
+        // HistorySelectByPosition(PositionGetInteger(POSITION_TICKET));
+        // m_history_orders_total = HistoryOrdersTotal();
+
         TradeBuilders[0] = LongBuilder;
         TradeBuilders[1] = ShortBuilder;
     }
@@ -92,19 +97,65 @@ class CBuilderManager final {
         PeriodCollection.ChangePeriod(sparam);
     }
 
-    bool isNewPosition() {
-        if (m_position_total != PositionsTotal()) {
-            m_position_total = PositionsTotal();
+    // void onTrade() {
+    //     PositionReporter.getStatus();
+    //     PositionReporter.getPositionType();
+    //     // if (isNewPosition()) {
+    //     //     for (uint i{0}; i < TradeBuilders.Size(); ++i) {
+    //     //         TradeBuilders[i].onTrade();
+    //     //     }
+    //     // }
+    // }
 
-            return true;
+    void onTrade() {
+        // PositionReporter.getStatus();
+        // PositionReporter.getPositionType();
+        // if (PositionReporter.getStatus()) {
+        //     if (m_history_orders_total != HistoryOrdersTotal()) {
+        //         if (m_history_orders_total) {
+        //             // continueing position
+        //             // PrintFormat("continue position %d", PositionGetInteger(POSITION_TICKET));
+        //             // TradeBuilders[].onPositionChange();
+        //             if (HistoryOrdersTotal()) {
+        //                 PrintFormat("continue position %d", PositionGetInteger(POSITION_TICKET));
+        //             } else {
+        //                 PrintFormat("close position %d", PositionGetInteger(POSITION_TICKET));
+        //             }
+
+        //         } else {
+        //             // open position
+        //             PrintFormat("open position %d", PositionGetInteger(POSITION_TICKET));
+        //             // TradeBuilders[PositionGetInteger(POSITION_TICKET)].onPositionOpen();
+        //         }
+        //         m_history_orders_total = HistoryOrdersTotal();
+        //     }
+        //     // for (uint i{0}; i < TradeBuilders.Size(); ++i) {
+        //     //     TradeBuilders[i].onTrade();
+        //     // }
+        // } else {
+        //     PrintFormat("close position");
+        // }
+        bool const new_status{PositionReporter.getStatus()};
+        if (!m_old_status && new_status) {
+            PrintFormat("%s open position, %s %s", __FUNCTION__, string(m_old_status), string(new_status));
+        } else if (m_old_status && new_status) {
+            PrintFormat("%s continue position, %s %s", __FUNCTION__, string(m_old_status), string(new_status));
+        } else if (m_old_status && !new_status) {
+            PrintFormat("%s close position, %s %s", __FUNCTION__, string(m_old_status), string(new_status));
         }
 
-        return false;
+        m_old_status = new_status;
     }
 
-    // void onTrade() {
-    //     for (uint i{0}; i < TradeBuilders.Size(); ++i) {
-    //         TradeBuilders[i].onTrade();
+   private:
+    // bool isNewPosition() {
+    //     // if (PositionSelect(Symbol()) && HistorySelectByPosition(PositionGetInteger(POSITION_TICKET)) && m_history_orders_total != HistoryOrdersTotal()) {
+    //     if (PositionReporter.getStatus() && m_history_orders_total != HistoryOrdersTotal()) {
+    //         m_history_orders_total = HistoryOrdersTotal();
+    //         // PrintFormat("%s %d %d", __FUNCTION__, m_history_orders_total, OrdersTotal());
+    //         return true;
     //     }
+
+    //     return false;
     // }
 };

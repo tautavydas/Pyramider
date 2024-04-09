@@ -44,7 +44,9 @@ class CPositionReporter final {
       }
     }*/
 
-    bool getStatus() const { return m_status; }
+    bool getStatus() const {
+        return PositionSelect(Symbol()) && HistorySelectByPosition(PositionGetInteger(POSITION_TICKET));
+    }
 
     /*void setPrice() {
       if (status) {
@@ -90,7 +92,7 @@ class CPositionReporter final {
             m_margin = AccountInfoDouble(ACCOUNT_MARGIN);
         }
 
-        if (PositionSelect(Symbol()) && HistorySelectByPosition(PositionGetInteger(POSITION_TICKET))) {
+        if (getStatus()) {
             m_status = true;
             m_price = PositionGetDouble(POSITION_PRICE_OPEN);
             m_volume = PositionGetDouble(POSITION_VOLUME) / HistoryDealsTotal();

@@ -139,6 +139,26 @@ void OnTick() {
     ChartRedraw();*/
     // PositionReporter.SetValue();
     BuilderManager.onTick();
+
+    // if (Symbol() == "BTCUSD") {
+    //     PositionsTotal();
+    // PositionSelect(Symbol());
+    // PositionGetSymbol(0);
+    // HistorySelectByPosition(PositionGetInteger(POSITION_TICKET));
+    // PrintFormat("%s 1# %d", __FUNCTION__, PositionsTotal());
+    // PrintFormat("%s 2# %d", __FUNCTION__, PositionSelect(Symbol()));
+    // PrintFormat("%s 3# %d", __FUNCTION__, PositionGetSymbol(0));
+    // PrintFormat("%s 4# %d", __FUNCTION__, HistorySelectByPosition(PositionGetInteger(POSITION_TICKET)));
+    // PrintFormat("%s 5# %d", __FUNCTION__, HistoryOrdersTotal());
+    // PrintFormat("%s 6 %d", __FUNCTION__, HistoryDealsTotal());
+    // }
+
+    // if (m_old_staPositionReporter.getStatus())
+    // if (BuilderManager.isNewPosition()) {
+    //     // PrintFormat("%s 1", __FUNCTION__);
+    // } else {
+    //     // PrintFormat("%s 2", __FUNCTION__);
+    // }
 }
 
 void OnTrade() {
@@ -167,11 +187,24 @@ void OnTrade() {
 
     // PrintFormat("%d", PositionsTotal());
 
-    if (BuilderManager.isNewPosition()) {
-        PrintFormat("%s 1", __FUNCTION__);
-    } else {
-        PrintFormat("%s 2", __FUNCTION__);
-    }
+    // PositionSelect(Symbol());
+    // if (BuilderManager.isNewPosition()) {
+    //     PrintFormat("%s 1", __FUNCTION__);
+    // } else {
+    //     PrintFormat("%s %u", __FUNCTION__, HistoryOrdersTotal());
+    // }
+    // PositionsTotal();
+    // PositionSelect(Symbol());
+    // PrintFormat("%s %d %d", __FUNCTION__, HistoryOrdersTotal(), HistoryDealsTotal());
+
+    // if (BuilderManager.isNewPosition()) {
+    //     // PrintFormat("%s 1", __FUNCTION__);
+
+    //     } else {
+    //     // PrintFormat("%s 2", __FUNCTION__);
+    // }
+
+    BuilderManager.onTrade();
 }
 
 void OnTradeTransaction(MqlTradeTransaction const &transaction, MqlTradeRequest const &request, MqlTradeResult const &result) {

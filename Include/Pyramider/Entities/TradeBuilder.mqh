@@ -10,7 +10,8 @@ class ITradeBuilder {
     virtual void Hide() const = 0;
     virtual void Draw() = 0;
     virtual void onTick() const = 0;
-    // virtual void onTrade() const = 0;
+    virtual void onPositionOpen() const = 0;
+    virtual void onPositionChange() const = 0;
     virtual bool onEdit(string const &sparam) const = 0;
     virtual bool onButton(string const &sparam) = 0;
     virtual void CalcLevels() const = 0;
@@ -67,12 +68,6 @@ class CTradeBuilder : public ITradeBuilder {
         delete DrawMarginCall;
     }
 
-    void onTick() const override {
-        // Trade.UpdatePrice();
-        // Price.UpdatePrice();
-        // CalcLevels();
-    }
-
     void Draw() override {
         if (orderExists()) {
             Reset.Draw();
@@ -95,8 +90,25 @@ class CTradeBuilder : public ITradeBuilder {
         DrawMarginCall.Hide();
     }
 
+    void onTick() const override {
+        // Trade.UpdatePrice();
+        // Price.UpdatePrice();
+        // CalcLevels();
+    }
+
     // void onTrade() const { /*PrintFormat("%s", __FUNCTION__);*/
+    //     // PrintFormat("%s VolumeLots %f", __FUNCTION__, volume_total);
+    //     PrintFormat("%s Leverage %f", __FUNCTION__, Leverage);
+    //     PrintFormat("%s Contract %f", __FUNCTION__, Contract);
+    //     PrintFormat("%s Volume %f", __FUNCTION__, Contract * PositionReporter.getVolume());
+    //     // PrintFormat("%s Price %f", __FUNCTION__, PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue());
+    //     // PrintFormat("%s NotionalDrop %f", __FUNCTION__, Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote));
+    //     // PrintFormat("%s PriceDrop %f", __FUNCTION__, Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote) / (Contract * volume));
+    //     // PrintFormat("%s PriceMargin %f", __FUNCTION__, (PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue()) - Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote) / (Contract * volume));
     // }
+
+    void onPositionOpen() const { PrintFormat("%s", __FUNCTION__); }
+    void onPositionChange() const { PrintFormat("%s", __FUNCTION__); }
 
     bool onEdit(string const &sparam) const override {
         return EditableCollection.onEdit(sparam);
