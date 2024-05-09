@@ -11,7 +11,7 @@ input double  // PriceRatioLong = 1, PriceRatioShort = 1,
     // NotionalRatioShort = 1,
     // ProfitRatioLong = 1, ProfitRatioShort = 1,
     Xproportions = 0.025,
-    Yproportions = 0.1;
+    Yproportions = 0.05;
 // input uint PriceRatioDigits    = 3    , NotionalRatioDigits = 2;
 // input uint NotionalRatioDigits = 2;
 
