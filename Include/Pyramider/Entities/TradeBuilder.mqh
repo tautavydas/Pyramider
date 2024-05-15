@@ -27,7 +27,7 @@ class CTradeBuilder : public ITradeBuilder {
         const *const Volume,
         const *const NotionalRatio;
     DrawButton *const DrawDeals, *const DrawPositions, *const DrawMarginCall;
-    ActionButton *const Trade, *const Reset;
+    ActionButton *const PlaceOrders, *const ResetOrders;
     ExtremumType const MinMax;
     CConverter const *const Converter;
 
@@ -50,9 +50,9 @@ class CTradeBuilder : public ITradeBuilder {
           RestrictedDeals(EditableCollection[4]),
           DrawDeals(new DrawButton(proportions_manager, 14, position_type, "Deals", Volume.m_digits)),
           DrawPositions(new DrawButton(proportions_manager, 16, position_type, "Positions", Volume.m_digits)),
-          DrawMarginCall(new DrawButton(proportions_manager, 20, position_type, "MarginCall", 3)),
-          Trade(new ActionButton(proportions_manager, 0, position_type, "Limit")),
-          Reset(new ActionButton(proportions_manager, 0, position_type, "Reset")),
+          DrawMarginCall(new DrawButton(proportions_manager, 21, position_type, "MarginCall", 3)),
+          PlaceOrders(new ActionButton(proportions_manager, 0, position_type, "Limit")),
+          ResetOrders(new ActionButton(proportions_manager, 0, position_type, "Reset")),
           m_quote(position_type == POSITION_TYPE_BUY ? SYMBOL_ASK : SYMBOL_BID),
           m_type(position_type == POSITION_TYPE_BUY ? ORDER_TYPE_BUY_LIMIT : ORDER_TYPE_SELL_LIMIT),
           m_direction(position_type == POSITION_TYPE_BUY ? -1 : 1),
@@ -61,8 +61,8 @@ class CTradeBuilder : public ITradeBuilder {
     ~CTradeBuilder() {
         delete Converter;
         delete EditableCollection;
-        delete Reset;
-        delete Trade;
+        delete ResetOrders;
+        delete PlaceOrders;
         delete DrawDeals;
         delete DrawPositions;
         delete DrawMarginCall;
@@ -70,21 +70,21 @@ class CTradeBuilder : public ITradeBuilder {
 
     void Draw() override {
         if (orderExists()) {
-            Reset.Draw();
+            ResetOrders.Draw();
         } else {
             EditableCollection.Draw();
             DrawDeals.Draw();
             DrawPositions.Draw();
             DrawMarginCall.Draw();
             if (DrawDeals.State())
-                Trade.Draw();
+                PlaceOrders.Draw();
         }
     }
 
     void Hide() const {
         EditableCollection.Hide();
-        Trade.Hide();
-        Reset.Hide();
+        PlaceOrders.Hide();
+        ResetOrders.Hide();
         DrawDeals.Hide();
         DrawPositions.Hide();
         DrawMarginCall.Hide();
@@ -93,7 +93,7 @@ class CTradeBuilder : public ITradeBuilder {
     void onTick() const override {
         // Trade.UpdatePrice();
         // Price.UpdatePrice();
-        // CalcLevels();
+        //  CalcLevels();
     }
 
     // void onTrade() const { /*PrintFormat("%s", __FUNCTION__);*/
@@ -115,20 +115,20 @@ class CTradeBuilder : public ITradeBuilder {
     }
 
     bool onButton(string const &sparam) {
-        if (Trade.name == sparam) {
+        if (PlaceOrders.name == sparam) {
             if (DrawDeals.State()) {
-                Trade.Hide();
+                PlaceOrders.Hide();
                 DrawDeals.Hide();
                 DrawPositions.Hide();
                 RestrictedDeals.Hide();
                 EditableCollection.Hide();
-                Reset.Draw();
+                ResetOrders.Draw();
                 MakeOrders();
             }
             m_reset_bool = true;
             // return false;
-        } else if (Reset.name == sparam) {
-            Reset.Hide();
+        } else if (ResetOrders.name == sparam) {
+            ResetOrders.Hide();
             DrawDeals.Draw();
             DrawPositions.Draw();
             EditableCollection.Draw();
@@ -144,16 +144,16 @@ class CTradeBuilder : public ITradeBuilder {
                     m_reset_bool = false;
                 }
                 if (draw_deals) {
-                    Trade.Draw();
+                    PlaceOrders.Draw();
                 }
             } else {
                 RestrictedDeals.Hide();
-                Trade.Hide();
+                PlaceOrders.Hide();
                 m_reset_bool = true;
             }
 
             if (!draw_deals) {
-                Trade.Hide();
+                PlaceOrders.Hide();
                 DrawDeals.DeleteLines();
             }
 
@@ -162,7 +162,9 @@ class CTradeBuilder : public ITradeBuilder {
             }
 
             return true;
-        }
+        } /*else if (DrawMarginCall.name == sparam) {
+            DrawMarginCall.Draw();
+        }*/
 
         return EditableCollection.onButton(sparam);
     }
@@ -212,7 +214,7 @@ class CTradeBuilder : public ITradeBuilder {
                 volume{Volume.getValue()}, volume_total{volume},
                 notional{price * volume}, notional_total{notional},
                 Margin{Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote)};
-
+            // PrintFormat("%s %f %f", __FUNCTION__, price, volume);
             DrawDeals.ResetCounter();
             DrawPositions.ResetCounter();
             while (Margin * MarginCall < equity && /*volume_total < Volumes.VolumeLimit*/ Volumes.VolumeLimit ? volume_total < Volumes.VolumeLimit : true && fmax(DrawDeals.SizeCounter(), DrawPositions.SizeCounter()) < Volumes.AccountLimitOrders) {
