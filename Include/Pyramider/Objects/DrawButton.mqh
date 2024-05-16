@@ -93,9 +93,7 @@ class DrawButton final : public StateObject<Parameters> {
       return size > 0 ? StringToDouble(result[size - 1]) : 6.66;
     }*/
 
-    string Name(uint const cnt) const {
-        return StringFormat("%s %u", name, cnt);
-    }
+    string Name(uint const cnt) const { return StringFormat("%s %u", name, cnt); }
 
    private:
     void DrawLine(uint const cnt) {

@@ -224,6 +224,7 @@ class CTradeBuilder : public ITradeBuilder {
                         curr_volume = Volumes.VolumeMax <= rest_volume ? Volumes.VolumeMax : rest_volume;
                         DrawDeals.Push(price, curr_volume);
                         // PrintFormat("%s %u %u", __FUNCTION__, i, DrawDeals.SizeCounter());
+                        DrawMarginCall.Push(price - Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote) / (Contract * volume), 1);
                         rest_volume -= curr_volume;
                     }
                 }
@@ -241,11 +242,13 @@ class CTradeBuilder : public ITradeBuilder {
             uint const restricted_deals{uint(RestrictedDeals.getValue())};
             DrawDeals.Drop(restricted_deals);
             DrawPositions.Drop(restricted_deals);
+            DrawMarginCall.Drop(restricted_deals);
 
             if (state_deals)
                 DrawDeals.DrawLines();
             if (state_positions) {
                 DrawPositions.DrawLines();
+                DrawMarginCall.DrawLines();
                 // PrintFormat("%s VolumeLots %f", __FUNCTION__, volume_total);
                 // PrintFormat("%s Leverage %f", __FUNCTION__, Leverage);
                 // PrintFormat("%s Contract %f", __FUNCTION__, Contract);
