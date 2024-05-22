@@ -95,7 +95,7 @@ class CPositionReporter final {
         if (getStatus()) {
             m_status = true;
             m_price = PositionGetDouble(POSITION_PRICE_OPEN);
-            m_volume = PositionGetDouble(POSITION_VOLUME) / HistoryDealsTotal();
+            m_volume = PositionGetDouble(POSITION_VOLUME);  // / HistoryDealsTotal();
             // avg_volume = volume / HistoryDealsTotal();
             m_profit = PositionGetDouble(POSITION_PROFIT);
             m_swap = PositionGetDouble(POSITION_SWAP);

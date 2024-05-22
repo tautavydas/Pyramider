@@ -86,15 +86,17 @@ class CEditableCollection final {
     CEditableObject *const operator[](uint const index) const { return Edits[index]; }
 
     void Draw() {
-        if (!PositionReporter.getStatus()) Edits[0].Draw();
+        if (!PositionReporter.getStatus()) {
+            Edits[0].Draw();
+            Edits[2].Draw();
+        }
 
         Edits[1].Draw();
-        Edits[2].Draw();
         Edits[3].Draw();
+        Edits[4].Draw();
     }
 
-    void
-    Hide() {
+    void Hide() {
         for (uint i{0}; i < Edits.Size(); ++i)
             Edits[i].Hide();
     }

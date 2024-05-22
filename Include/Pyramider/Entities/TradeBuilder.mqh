@@ -179,7 +179,7 @@ class CTradeBuilder : public ITradeBuilder {
             notional_ratio{NotionalRatio.getValue()};
         double
             price{PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue()},
-            volume{Volume.getValue()}, volume_total{volume},
+            volume{PositionReporter.getStatus() ? PositionReporter.getVolume() : Volume.getValue()}, volume_total{volume},
             notional{price * volume}, notional_total{notional},
             Margin{Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote)};
 
@@ -211,20 +211,24 @@ class CTradeBuilder : public ITradeBuilder {
                 notional_ratio{NotionalRatio.getValue()};
             double
                 price{PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue()},
-                volume{Volume.getValue()}, volume_total{volume},
+                volume{PositionReporter.getStatus() ? PositionReporter.getVolume() : Volume.getValue()}, volume_total{volume},
                 notional{price * volume}, notional_total{notional},
                 Margin{Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote)};
-            // PrintFormat("%s %f %f", __FUNCTION__, price, volume);
+            // PrintFormat("%s %f %f %f %f %f %f", __FUNCTION__, price, volume, notional_total, Contract, Leverage, Margin);
             DrawDeals.ResetCounter();
             DrawPositions.ResetCounter();
             while (Margin * MarginCall < equity && /*volume_total < Volumes.VolumeLimit*/ Volumes.VolumeLimit ? volume_total < Volumes.VolumeLimit : true && fmax(DrawDeals.SizeCounter(), DrawPositions.SizeCounter()) < Volumes.AccountLimitOrders) {
                 if (state_deals) {
                     double rest_volume{volume}, curr_volume{rest_volume};
+
+                    DrawMarginCall.Push(price - Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote) / (Contract * volume), 1);
+                    double price_drop = Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote);
+                    // PrintFormat("%s %u %f", __FUNCTION__, DrawDeals.SizeCounter(), price_drop);
+
                     for (uint i{0}, num_iter{uint(floor(volume / Volumes.VolumeMax))}; i <= num_iter; ++i) {
                         curr_volume = Volumes.VolumeMax <= rest_volume ? Volumes.VolumeMax : rest_volume;
                         DrawDeals.Push(price, curr_volume);
                         // PrintFormat("%s %u %u", __FUNCTION__, i, DrawDeals.SizeCounter());
-                        DrawMarginCall.Push(price - Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote) / (Contract * volume), 1);
                         rest_volume -= curr_volume;
                     }
                 }
