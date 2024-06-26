@@ -7,21 +7,31 @@ double Sub(double const op1, double const op2) { return op1 - op2; }
 class Parameters {
    protected:
     CProportionsManager const* const ProportionsManager;
-    uint const coefX, const coefY, const coefW, const coefH;
+    uint m_SizeX, m_SizeY, coefX, const coefY, const coefW, const coefH;
 
    public:
     Parameters(CProportionsManager const& proportions_manager, uint const coefX_, uint const coefY_, uint const coefW_, uint const coefH_)
-        : ProportionsManager(&proportions_manager), coefX(coefX_), coefY(coefY_), coefW(coefW_), coefH(coefH_) {}
+        : ProportionsManager(&proportions_manager), coefX(coefX_), coefY(coefY_), coefW(coefW_), coefH(coefH_) {
+        // UpdateCoordinates();
+    }
     Parameters(CProportionsManager const& proportions_manager, uint const coefX_, ENUM_POSITION_TYPE const position_type, uint const coefW_, uint const coefH_)
-        : ProportionsManager(&proportions_manager), coefX(coefX_), coefY(position_type == POSITION_TYPE_BUY ? 2 : 1), coefW(coefW_), coefH(coefH_) {}
+        : ProportionsManager(&proportions_manager), coefX(coefX_), coefY(position_type == POSITION_TYPE_BUY ? 2 : 1), coefW(coefW_), coefH(coefH_) {
+        // UpdateCoordinates();
+    }
 
-    void Draw(string const name) const {
-        uint const size_x{SizeX()}, const size_y{SizeY()};
-        ObjectSetInteger(ChartID(), name, OBJPROP_FONTSIZE, 2 + uint(round(sqrt(sqrt(size_x * size_y)))));
+    void UpdateCoordinates() {
+        // PrintFormat("%s %u %u", __FUNCTION__, m_SizeX, m_SizeY);
+        m_SizeX = ProportionsManager.button_width_pixels * coefW;
+        m_SizeY = ProportionsManager.button_height_pixels / coefH;
+        // PrintFormat("%s %u %u", __FUNCTION__, m_SizeX, m_SizeY);
+    }
+
+    void SetCoordinates(string const name) const {
+        ObjectSetInteger(ChartID(), name, OBJPROP_FONTSIZE, 2 + uint(round(sqrt(sqrt(m_SizeX * m_SizeY)))));
         ObjectSetInteger(ChartID(), name, OBJPROP_XDISTANCE, ProportionsManager.start_pixel + CoordinateX());
         ObjectSetInteger(ChartID(), name, OBJPROP_YDISTANCE, CoordinateY());
-        ObjectSetInteger(ChartID(), name, OBJPROP_XSIZE, size_x);
-        ObjectSetInteger(ChartID(), name, OBJPROP_YSIZE, size_y);
+        ObjectSetInteger(ChartID(), name, OBJPROP_XSIZE, m_SizeX);
+        ObjectSetInteger(ChartID(), name, OBJPROP_YSIZE, m_SizeY);
     }
 
    private:

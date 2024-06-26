@@ -10,8 +10,8 @@ input double  // PriceRatioLong = 1, PriceRatioShort = 1,
               // NotionalRatioLong = 1,
     // NotionalRatioShort = 1,
     // ProfitRatioLong = 1, ProfitRatioShort = 1,
-    Xproportions = 0.025,
-    Yproportions = 0.05;
+    xProportions = 0.025,
+    yProportions = 0.05;
 // input uint PriceRatioDigits    = 3    , NotionalRatioDigits = 2;
 // input uint NotionalRatioDigits = 2;
 
@@ -44,8 +44,8 @@ CMagicNumber const Magic;
 
 // #include <Pyramider/Entities/PositionReporter.mqh>
 // CPositionReporter PositionReporter;
-
-CBuilderManager BuilderManager;
+ENUM_TIMEFRAMES const Periods[]{PERIOD_M1, PERIOD_M2, PERIOD_M3, PERIOD_M4, PERIOD_M5, PERIOD_M6, PERIOD_M10, PERIOD_M12, PERIOD_M15, PERIOD_M20, PERIOD_M30, PERIOD_H1, PERIOD_H2, PERIOD_H3, PERIOD_H4, PERIOD_H6, PERIOD_H8, PERIOD_H12, PERIOD_D1, PERIOD_W1, PERIOD_MN1};
+CBuilderManager BuilderManager(xProportions, yProportions, Periods);
 
 int OnInit() {
     /*Base * base = new Derived;
@@ -193,9 +193,11 @@ void OnTrade() {
     // } else {
     //     PrintFormat("%s %u", __FUNCTION__, HistoryOrdersTotal());
     // }
-    // PositionsTotal();
-    // PositionSelect(Symbol());
-    // PrintFormat("%s %d %d", __FUNCTION__, HistoryOrdersTotal(), HistoryDealsTotal());
+    /*PositionsTotal();
+    PositionSelect(Symbol());
+    PrintFormat("%s %d %d", __FUNCTION__, HistoryOrdersTotal(), HistoryDealsTotal());*/
+
+    // PrintFormat("%s %d", __FUNCTION__, OrdersTotal());
 
     // if (BuilderManager.isNewPosition()) {
     //     // PrintFormat("%s 1", __FUNCTION__);
@@ -205,60 +207,66 @@ void OnTrade() {
     // }
 
     BuilderManager.onTrade();
+    // ChartRedraw();
 }
 
 void OnTradeTransaction(MqlTradeTransaction const &transaction, MqlTradeRequest const &request, MqlTradeResult const &result) {
     /*PrintFormat("%s Request: action %s magic %llu order %llu symbol %s volume %g price %g stoplimit %g sl %g tp %g devation %llu type %s type_filling %s type_time %s expiration %s comment %s position %llu position_by %llu",
-      __FUNCTION__,
-      EnumToString(request.action),
-      request.magic,
-      request.order,
-      request.symbol,
-      request.volume,
-      request.price,
-      request.stoplimit,
-      request.sl,
-      request.tp,
-      request.deviation,
-      EnumToString(request.type),
-      EnumToString(request.type_filling),
-      EnumToString(request.type_time),
-      TimeToString(request.type_time, TIME_DATE|TIME_MINUTES|TIME_SECONDS),
-      request.comment,
-      request.position,
-      request.position_by);
+                __FUNCTION__,
+                EnumToString(ENUM_TRADE_REQUEST_ACTIONS(request.action)),
+                request.magic,
+                request.order,
+                request.symbol,
+                request.volume,
+                request.price,
+                request.stoplimit,
+                request.sl,
+                request.tp,
+                request.deviation,
+                EnumToString(request.type),
+                EnumToString(request.type_filling),
+                EnumToString(request.type_time),
+                TimeToString(request.type_time, TIME_DATE | TIME_MINUTES | TIME_SECONDS),
+                request.comment,
+                request.position,
+                request.position_by);
 
     PrintFormat("%s Result: retcode %u deal %llu order %llu volume %g price %g bid %g ask %g comment %s request_id %u retcode_external %u",
-      __FUNCTION__,
-      result.retcode,
-      result.deal,
-      result.order,
-      result.volume,
-      result.price,
-      result.bid,
-      result.ask,
-      result.comment,
-      result.request_id,
-      result.retcode_external);
+                __FUNCTION__,
+                result.retcode,
+                result.deal,
+                result.order,
+                result.volume,
+                result.price,
+                result.bid,
+                result.ask,
+                result.comment,
+                result.request_id,
+                result.retcode_external);*/
 
-    PrintFormat("%s Transaction: deal %llu order %llu symbol %s type %s order_type %s order_state %s deal_type %s time_type %s time_expiration %s price %g price_trigger %g price_sl %g price_tp %g volume %g position %llu position_by %llu",
-      __FUNCTION__,
-      transaction.deal,
-      transaction.order,
-      transaction.symbol,
-      EnumToString(transaction.type),
-      EnumToString(transaction.order_type),
-      EnumToString(transaction.order_state),
-      EnumToString(transaction.deal_type),
-      EnumToString(transaction.time_type),
-      TimeToString(transaction.time_expiration, TIME_DATE|TIME_MINUTES|TIME_SECONDS),
-      transaction.price,
-      transaction.price_trigger,
-      transaction.price_sl,
-      transaction.price_tp,
-      transaction.volume,
-      transaction.position,
-      transaction.position_by);*/
+    /*PrintFormat("%s Transaction: deal %llu order %llu symbol %s type %s order_type %s order_state %s deal_type %s time_type %s time_expiration %s price %g price_trigger %g price_sl %g price_tp %g volume %g position %llu position_by %llu",
+                __FUNCTION__,
+                transaction.deal,
+                transaction.order,
+                transaction.symbol,
+                EnumToString(transaction.type),
+                EnumToString(ENUM_ORDER_TYPE(transaction.order_type)),
+                EnumToString(transaction.order_state),
+                EnumToString(transaction.deal_type),
+                EnumToString(transaction.time_type),
+                TimeToString(transaction.time_expiration, TIME_DATE | TIME_MINUTES | TIME_SECONDS),
+                transaction.price,
+                transaction.price_trigger,
+                transaction.price_sl,
+                transaction.price_tp,
+                transaction.volume,
+                transaction.position,
+                transaction.position_by);*/
+
+    // PrintFormat("%s %d", __FUNCTION__, OrdersTotal());
+
+    // bool select = HistorySelectByPosition(PositionGetInteger(POSITION_TICKET));
+    // PrintFormat("%s %s %d", __FUNCTION__, string(select), HistoryOrdersTotal());
 
     /*PrintFormat("%s Request: action %s type %s type_filling %s type_time %s",
       __FUNCTION__,
@@ -357,15 +365,21 @@ void OnChartEvent(int const id, long const &lparam, double const &dparam, string
         // ObjectShort.EventTradeClick(sparam);
         // PrintFormat("%s %s", __FUNCTION__,sparam);
         // PrintFormat("%s", __FUNCTION__);
+        PrintFormat("%s %s", __FUNCTION__, EnumToString(ENUM_CHART_EVENT(id)));
         BuilderManager.onButton(sparam);
         // PositionReporter.CalcLevels();
         // PeriodCollection.ChangePeriod(sparam);
         ChartRedraw();
     } else if (id == CHARTEVENT_CHART_CHANGE) {
         // ProportionsManager.UpdateProportions();
+        PrintFormat("%s %s", __FUNCTION__, EnumToString(ENUM_CHART_EVENT(id)));
+
+        // BuilderManager.UpdatePosition();
+        // BuilderManager.Draw();
+        BuilderManager.UpdatePosition();
         BuilderManager.Draw();
-        // PeriodCollection.UpdateButton();
-        // PeriodCollection.Draw();
+        //  PeriodCollection.UpdateButton();
+        //  PeriodCollection.Draw();
         ChartRedraw();
     }
     // PrintFormat("1 %s | %s | %u | %u | %s", __FUNCTION__, EnumToString(ENUM_CHART_EVENT(id)), lparam, dparam, sparam);

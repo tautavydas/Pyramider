@@ -51,9 +51,9 @@ class CEditableCollection final {
         Edits[4] = new CEditableObject(proportions_manager, new ClampRestricted<ExtremumType>(trade_builder), 18, position_type, "RestrictedTrades", restricted_digits);
 
         for (uint i{0}; i < Edits.Size(); ++i) {
-            MapEdit.Add(Edits[i].name, Edits[i]);
-            ValueUp.Add(Edits[i].ValueUp.name, new CPair<ChangeButton<ParametersStandard>>(Edits[i], Edits[i].ValueUp));
-            ValueDown.Add(Edits[i].ValueDown.name, new CPair<ChangeButton<ParametersShifted>>(Edits[i], Edits[i].ValueDown));
+            MapEdit.Add(Edits[i].m_name, Edits[i]);
+            ValueUp.Add(Edits[i].ValueUp.m_name, new CPair<ChangeButton<ParametersStandard>>(Edits[i], Edits[i].ValueUp));
+            ValueDown.Add(Edits[i].ValueDown.m_name, new CPair<ChangeButton<ParametersShifted>>(Edits[i], Edits[i].ValueDown));
         }
     }
 
@@ -85,15 +85,23 @@ class CEditableCollection final {
 
     CEditableObject *const operator[](uint const index) const { return Edits[index]; }
 
-    void Draw() {
+    /*void Draw() {
         if (!PositionReporter.getStatus()) {
             Edits[0].Draw();
             Edits[2].Draw();
         }
 
-        Edits[1].Draw();
-        Edits[3].Draw();
-        Edits[4].Draw();
+        // Edits[1].Draw();
+        // Edits[3].Draw();
+        //  Edits[4].Draw();
+    }*/
+
+    void UpdatePosition() {
+        Edits[0].UpdatePosition();
+        Edits[1].UpdatePosition();
+        Edits[2].UpdatePosition();
+        Edits[3].UpdatePosition();
+        Edits[4].UpdatePosition();
     }
 
     void Hide() {

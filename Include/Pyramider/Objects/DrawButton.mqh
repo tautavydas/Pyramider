@@ -1,6 +1,6 @@
 // ###<Experts/Pyramider.mq5>
 
-class DrawButton final : public StateObject<Parameters> {
+class DrawButton final : public Stateful<Parameters> {
    public:
     class Pair final {
        public:
@@ -16,10 +16,10 @@ class DrawButton final : public StateObject<Parameters> {
    public:
     uint m_counter;
     DrawButton(CProportionsManager const& proportions_manager, uint const coefX, ENUM_POSITION_TYPE const position_type, string const action, uint const digits)
-        : StateObject((position_type == POSITION_TYPE_BUY ? "Long" : "Short") + action,
-                      (position_type == POSITION_TYPE_BUY ? "Long" : "Short") + action,
-                      action,
-                      new Parameters(proportions_manager, coefX, position_type, 2, 1)),
+        : Stateful((position_type == POSITION_TYPE_BUY ? "Long" : "Short") + action,
+                   (position_type == POSITION_TYPE_BUY ? "Long" : "Short") + action,
+                   action,
+                   new Parameters(proportions_manager, coefX, position_type, 2, 1)),
           m_counter(0),
           m_line_tooltip(action == "Deals" ? "trade_volume" : "total_volume"),
           m_colour(action == "Deals" ? (position_type == POSITION_TYPE_BUY ? Cyan : Orange) : (position_type == POSITION_TYPE_BUY ? Violet : Red)),
@@ -32,7 +32,7 @@ class DrawButton final : public StateObject<Parameters> {
     }
 
     void Hide() {
-        StateObject<Parameters>::Hide();
+        Stateful<Parameters>::Hide();
         DeleteLines();
     }
 
@@ -81,7 +81,7 @@ class DrawButton final : public StateObject<Parameters> {
         DeleteExcessLevels(cnt);
     }
 
-    bool State() const { return bool(ObjectGetInteger(ChartID(), name, OBJPROP_STATE)); }
+    bool State() const { return bool(ObjectGetInteger(ChartID(), m_name, OBJPROP_STATE)); }
 
     /*double Price(uint const cnt) const {
       return ObjectGetDouble(ChartID(), Name(cnt), OBJPROP_PRICE);
@@ -93,7 +93,7 @@ class DrawButton final : public StateObject<Parameters> {
       return size > 0 ? StringToDouble(result[size - 1]) : 6.66;
     }*/
 
-    string Name(uint const cnt) const { return StringFormat("%s %u", name, cnt); }
+    string Name(uint const cnt) const { return StringFormat("%s %u", m_name, cnt); }
 
    private:
     void DrawLine(uint const cnt) {

@@ -8,7 +8,7 @@ class CEditableObject final : public IDrawable {
 
    public:
     IAction const *const Action;
-    Parameters const *const Params;
+    Parameters *const Params;
     ChangeButton<ParametersStandard> *const ValueUp;
     ChangeButton<ParametersShifted> *const ValueDown;
     uint const m_digits;
@@ -19,8 +19,8 @@ class CEditableObject final : public IDrawable {
           m_bool_init(true),
           Action(&action),
           Params(new Parameters(proportions_manager, coefX, position_type, 2, 1)),
-          ValueUp(new ChangeButton<ParametersStandard>(proportions_manager, coefX, position_type, name)),
-          ValueDown(new ChangeButton<ParametersShifted>(proportions_manager, coefX, position_type, name)),
+          ValueUp(new ChangeButton<ParametersStandard>(proportions_manager, coefX, position_type, m_name)),
+          ValueDown(new ChangeButton<ParametersShifted>(proportions_manager, coefX, position_type, m_name)),
           m_digits(digits) {}
 
     ~CEditableObject() {
@@ -30,12 +30,18 @@ class CEditableObject final : public IDrawable {
         delete ValueDown;
     }
 
+    void UpdatePosition() {
+        Params.UpdateCoordinates();
+        ValueUp.UpdatePosition();
+        ValueDown.UpdatePosition();
+    }
+
     void Draw() {
         IDrawable::Draw();
-        ObjectSetInteger(ChartID(), name, OBJPROP_BORDER_COLOR, m_border_color);
-        ValueUp.Draw();
-        ValueDown.Draw();
-        Params.Draw(name);
+        ObjectSetInteger(ChartID(), m_name, OBJPROP_BORDER_COLOR, m_border_color);
+        Params.SetCoordinates(m_name);
+        ValueUp.DrawFresh();
+        ValueDown.DrawFresh();
         if (m_bool_init) {
             setText(Action.onInit());
             m_bool_init = false;
@@ -50,7 +56,7 @@ class CEditableObject final : public IDrawable {
     }
 
     double getValue() const {
-        return StringToDouble(ObjectGetString(ChartID(), name, OBJPROP_TEXT));
+        return StringToDouble(ObjectGetString(ChartID(), m_name, OBJPROP_TEXT));
     }
 
     void onEdit() const {
@@ -66,6 +72,6 @@ class CEditableObject final : public IDrawable {
     //     setText(Action.onTick(getValue()));
     // }
     void setText(double const display_value) const {
-        ObjectSetString(ChartID(), name, OBJPROP_TEXT, StringFormat("%.*f", m_digits, display_value));
+        ObjectSetString(ChartID(), m_name, OBJPROP_TEXT, StringFormat("%.*f", m_digits, display_value));
     }
 };

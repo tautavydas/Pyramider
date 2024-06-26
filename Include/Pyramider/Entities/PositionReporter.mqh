@@ -45,7 +45,7 @@ class CPositionReporter final {
     }*/
 
     bool getStatus() const {
-        return PositionSelect(Symbol()) && HistorySelectByPosition(PositionGetInteger(POSITION_TICKET));
+        return PositionsTotal() && PositionSelect(Symbol()) && HistorySelectByPosition(PositionGetInteger(POSITION_TICKET));
     }
 
     /*void setPrice() {
@@ -82,32 +82,45 @@ class CPositionReporter final {
 
     // private:
     EnumPositionType getPositionType() {
-        if (PositionsTotal()) {
+        /*if (PositionsTotal()) {
             m_balance = AccountInfoDouble(ACCOUNT_BALANCE) / PositionsTotal();
             m_equity = AccountInfoDouble(ACCOUNT_EQUITY) / PositionsTotal();
             m_margin = AccountInfoDouble(ACCOUNT_MARGIN) / PositionsTotal();
-        } else {
+        }
+        else {
             m_balance = AccountInfoDouble(ACCOUNT_BALANCE);
             m_equity = AccountInfoDouble(ACCOUNT_EQUITY);
             m_margin = AccountInfoDouble(ACCOUNT_MARGIN);
-        }
+        }*/
 
         if (getStatus()) {
             m_status = true;
+
+            m_balance = AccountInfoDouble(ACCOUNT_BALANCE) / PositionsTotal();
+            m_equity = AccountInfoDouble(ACCOUNT_EQUITY) / PositionsTotal();
+            m_margin = AccountInfoDouble(ACCOUNT_MARGIN) / PositionsTotal();
+
             m_price = PositionGetDouble(POSITION_PRICE_OPEN);
             m_volume = PositionGetDouble(POSITION_VOLUME);  // / HistoryDealsTotal();
             // avg_volume = volume / HistoryDealsTotal();
             m_profit = PositionGetDouble(POSITION_PROFIT);
             m_swap = PositionGetDouble(POSITION_SWAP);
+
             return EnumPositionType(PositionGetInteger(POSITION_TYPE));
         } else {
             m_status = false;
+
+            m_balance = AccountInfoDouble(ACCOUNT_BALANCE);
+            m_equity = AccountInfoDouble(ACCOUNT_EQUITY);
+            m_margin = AccountInfoDouble(ACCOUNT_MARGIN);
+
             double const zero{0};
             m_price = zero / zero;
             m_volume = Volumes.VolumeMin;
             // avg_volume = volume;
             m_profit = zero / zero;
             m_swap = zero / zero;
+
             return EnumPositionType::NONE;
         }
     }
