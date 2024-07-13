@@ -1,4 +1,5 @@
 // ###<Experts/Pyramider.mq5>
+#include <Pyramider/Entities/ProportionsManager.mqh>
 
 typedef double (*OperationPtr)(double const, double const);
 double Add(double const op1, double const op2) { return op1 + op2; }

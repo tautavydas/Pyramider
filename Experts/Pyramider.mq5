@@ -3,7 +3,6 @@
 #property version "6.66"
 
 // #resource "\\Indicators\\SubWindow.ex5"
-
 #include <Generic/HashMap.mqh>
 
 input double  // PriceRatioLong = 1, PriceRatioShort = 1,
@@ -25,6 +24,8 @@ input double  // PriceRatioLong = 1, PriceRatioShort = 1,
 
 double const Contract{SymbolInfoDouble(Symbol(), SYMBOL_TRADE_CONTRACT_SIZE)}, const MarginCall{AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL) / 100};
 long const Leverage{AccountInfoInteger(ACCOUNT_LEVERAGE)};
+ulong const cooloff_period{1000};
+ulong tick_count_milliseconds{GetTickCount64() - cooloff_period};
 
 #include <Pyramider/Entities/Converter.mqh>
 #include <Pyramider/Entities/MagicNumber.mqh>
@@ -100,12 +101,12 @@ int OnInit() {
     string str = "";
     bool success = INIT_SUCCEEDED;
     if (!TerminalInfoInteger(TERMINAL_TRADE_ALLOWED)) {
-        str += EnumToString(TERMINAL_TRADE_ALLOWED) + " ";
+        str += StringFormat("%s %s ", EnumToString(TERMINAL_TRADE_ALLOWED), string(bool(TerminalInfoInteger(TERMINAL_TRADE_ALLOWED))));
         success = INIT_FAILED;
     }
 
     if (!AccountInfoInteger(ACCOUNT_TRADE_ALLOWED)) {
-        str += EnumToString(ACCOUNT_TRADE_ALLOWED) + " ";
+        str += StringFormat("%s %s ", EnumToString(ACCOUNT_TRADE_ALLOWED), string(bool(AccountInfoInteger(ACCOUNT_TRADE_ALLOWED))));
         success = INIT_FAILED;
     }
 
@@ -207,7 +208,8 @@ void OnTrade() {
     // }
 
     BuilderManager.onTrade();
-    // ChartRedraw();
+    // PrintFormat("%s", __FUNCTION__);
+    //  ChartRedraw();
 }
 
 void OnTradeTransaction(MqlTradeTransaction const &transaction, MqlTradeRequest const &request, MqlTradeResult const &result) {
@@ -296,8 +298,9 @@ void OnTradeTransaction(MqlTradeTransaction const &transaction, MqlTradeRequest 
         // BuilderManager.SetGeometry();
         // ChartRedraw();
     }
-    // PrintFormat("%s %s '%s' %s", __FUNCTION__, EnumToString(transaction.type), transaction.symbol, EnumToString(request.type));
-    // PrintFormat("%s %s %s", __FUNCTION__, EnumToString(transaction.type), EnumToString(PositionReporter.getPositionType()));
+    // PrintFormat("%s", __FUNCTION__);
+    //  PrintFormat("%s %s '%s' %s", __FUNCTION__, EnumToString(transaction.type), transaction.symbol, EnumToString(request.type));
+    //  PrintFormat("%s %s %s", __FUNCTION__, EnumToString(transaction.type), EnumToString(PositionReporter.getPositionType()));
 }
 
 /*double DealMax() {
@@ -372,15 +375,21 @@ void OnChartEvent(int const id, long const &lparam, double const &dparam, string
         ChartRedraw();
     } else if (id == CHARTEVENT_CHART_CHANGE) {
         // ProportionsManager.UpdateProportions();
-        PrintFormat("%s %s", __FUNCTION__, EnumToString(ENUM_CHART_EVENT(id)));
+        // PrintFormat("%s %s %I64u %I64u", __FUNCTION__, EnumToString(ENUM_CHART_EVENT(id)), GetTickCount64() - tick_count_milliseconds, GetMicrosecondCount() - tick_count_microseconds);
 
         // BuilderManager.UpdatePosition();
         // BuilderManager.Draw();
-        BuilderManager.UpdatePosition();
-        BuilderManager.Draw();
         //  PeriodCollection.UpdateButton();
         //  PeriodCollection.Draw();
-        ChartRedraw();
+        if (tick_count_milliseconds + cooloff_period <= GetTickCount64()) {
+            PrintFormat("%s %s %I64u", __FUNCTION__, EnumToString(ENUM_CHART_EVENT(id)), GetTickCount64() - tick_count_milliseconds);
+            tick_count_milliseconds = GetTickCount64();
+            // BuilderManager.UpdatePosition();
+            BuilderManager.Draw();
+            ChartRedraw();
+        }
+    } else if (id == CHARTEVENT_CLICK) {
+        PrintFormat("%s %s", __FUNCTION__, EnumToString(ENUM_CHART_EVENT(id)));
     }
     // PrintFormat("1 %s | %s | %u | %u | %s", __FUNCTION__, EnumToString(ENUM_CHART_EVENT(id)), lparam, dparam, sparam);
 }

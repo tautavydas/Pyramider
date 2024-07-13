@@ -10,7 +10,7 @@ class CPositionReporter final {
 
    private:
     bool m_status;
-    double m_balance, m_equity, m_margin, m_price, m_volume, /*avg_volume,*/ m_profit, m_swap;
+    double m_balance, m_equity, m_margin, m_price_open, m_price_current, m_volume, /*avg_volume,*/ m_profit, m_swap;
 
    public:
     /*void CalcLevels() const {
@@ -64,9 +64,13 @@ class CPositionReporter final {
 
     double getSwap() const { return m_swap; }
 
-    double getPrice() const { return m_price; }
+    double getPriceOpen() const { return m_price_open; }
 
-    double getVolume() const { return m_volume; }
+    double getPriceCurrent() const { return m_price_current; }
+
+    double getVolume() const {
+        return m_volume;
+    }
 
     // double getAvgVolume() const { return avg_volume; }
 
@@ -100,8 +104,11 @@ class CPositionReporter final {
             m_equity = AccountInfoDouble(ACCOUNT_EQUITY) / PositionsTotal();
             m_margin = AccountInfoDouble(ACCOUNT_MARGIN) / PositionsTotal();
 
-            m_price = PositionGetDouble(POSITION_PRICE_OPEN);
+            m_price_open = PositionGetDouble(POSITION_PRICE_OPEN);
+            m_price_current = PositionGetDouble(POSITION_PRICE_CURRENT);
             m_volume = PositionGetDouble(POSITION_VOLUME);  // / HistoryDealsTotal();
+            // PrintFormat("%s %f", __FUNCTION__, m_volume);
+
             // avg_volume = volume / HistoryDealsTotal();
             m_profit = PositionGetDouble(POSITION_PROFIT);
             m_swap = PositionGetDouble(POSITION_SWAP);
@@ -115,7 +122,8 @@ class CPositionReporter final {
             m_margin = AccountInfoDouble(ACCOUNT_MARGIN);
 
             double const zero{0};
-            m_price = zero / zero;
+            m_price_open = zero / zero;
+            m_price_current = zero / zero;
             m_volume = Volumes.VolumeMin;
             // avg_volume = volume;
             m_profit = zero / zero;

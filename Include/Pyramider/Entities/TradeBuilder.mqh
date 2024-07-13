@@ -10,14 +10,14 @@ class ITradeBuilder {
     virtual void Hide() const = 0;
     virtual void UpdatePosition() = 0;
     virtual void Draw() = 0;
-    virtual void onTick() const = 0;
+    virtual void onTick() = 0;
     virtual void onPositionOpen() const = 0;
     virtual void onPositionChange() const = 0;
     virtual bool onEdit(string const &sparam) const = 0;
     virtual bool onButton(string const &sparam) = 0;
     virtual void onTrade() = 0;
-    virtual void CalcLevels() const = 0;
-    virtual uint OrdersCount() const = 0;
+    virtual void drawLevels() const = 0;
+    // virtual uint OrdersCount() const = 0;
 };
 
 template <typename ExtremumType>
@@ -25,16 +25,22 @@ class CTradeBuilder : public ITradeBuilder {
     CPositionReporter *const PositionReporter;
     CEditableCollection<ExtremumType> *const EditableCollection;
     CEditableObject *const RestrictedDeals, *const Price, *const PriceRatio, *const Volume, *const NotionalRatio;
-    DrawButton *const DrawDeals, *const DrawPositions, *const DrawMarginCall;
+    DrawButton *const DrawDeals, *const DrawMarginCall;
+
+   public:
+    DrawButton *const DrawPositions;
+
+   private:
     ActionButton *const PlaceOrders, *const CancelOrders;
     ExtremumType const MinMax;
     CConverter const *const Converter;
 
-    ENUM_SYMBOL_INFO_DOUBLE const m_quote;
+    ENUM_SYMBOL_INFO_DOUBLE const m_quote_type;
+    double m_quote_value;
     ENUM_ORDER_TYPE const m_type;
     int const m_direction;
     bool m_reset_bool;
-    uint m_orders_count;
+    // uint m_orders_count;
 
    public:
     CTradeBuilder(CProportionsManager const &proportions_manager,
@@ -48,16 +54,18 @@ class CTradeBuilder : public ITradeBuilder {
           Volume(EditableCollection[2]),
           NotionalRatio(EditableCollection[3]),
           RestrictedDeals(EditableCollection[4]),
-          DrawDeals(new DrawButton(proportions_manager, 14, position_type, "Deals", Volume.m_digits)),
-          DrawPositions(new DrawButton(proportions_manager, 16, position_type, "Positions", Volume.m_digits)),
-          DrawMarginCall(new DrawButton(proportions_manager, 21, position_type, "MarginCall", 3)),
-          PlaceOrders(new ActionButton(proportions_manager, 0, position_type, "Limit")),
-          CancelOrders(new ActionButton(proportions_manager, 0, position_type, "Cancel")),
-          m_quote(position_type == POSITION_TYPE_BUY ? SYMBOL_ASK : SYMBOL_BID),
+          DrawDeals(new DrawButton(proportions_manager, 0, position_type, "Deals", Volume.m_digits)),
+          DrawPositions(new DrawButton(proportions_manager, 14, position_type, "Positions", Volume.m_digits)),
+          DrawMarginCall(new DrawButton(proportions_manager, 19, position_type, "MarginCall", 3)),
+          PlaceOrders(new ActionButton(proportions_manager, 21, position_type, "Limit")),
+          CancelOrders(new ActionButton(proportions_manager, 21, position_type, "Cancel")),
+          m_quote_type(position_type == POSITION_TYPE_BUY ? SYMBOL_ASK : SYMBOL_BID),
+          m_quote_value(SymbolInfoDouble(Symbol(), m_quote_type)),
           m_type(position_type == POSITION_TYPE_BUY ? ORDER_TYPE_BUY_LIMIT : ORDER_TYPE_SELL_LIMIT),
           m_direction(position_type == POSITION_TYPE_BUY ? -1 : 1),
-          m_reset_bool(true),
-          m_orders_count(position_type == POSITION_TYPE_BUY ? 14 : 15) {}
+          m_reset_bool(true) /*,
+           m_orders_count(position_type == POSITION_TYPE_BUY ? 14 : 15)*/
+    {}
 
     ~CTradeBuilder() {
         delete Converter;
@@ -83,77 +91,86 @@ class CTradeBuilder : public ITradeBuilder {
     }
 
     void Draw() override {
-        if (PositionReporter.getStatus()) {
-            if (orderExists()) {
-                CancelOrders.DrawFresh();
-                PlaceOrders.Hide();
-                Price.Hide();
-                PriceRatio.Hide();
-                Volume.Hide();
-                NotionalRatio.Hide();
-                RestrictedDeals.Hide();
-                DrawDeals.Hide();
-                DrawPositions.Hide();
-                DrawMarginCall.Hide();
-            } else {
-                DrawDeals.DrawKeepState();
-                DrawPositions.DrawKeepState();
-
-                if (DrawDeals.State() || DrawPositions.State()) {
-                    if (DrawDeals.State()) {
-                        PlaceOrders.DrawKeepState();
-                    } else {
-                        PlaceOrders.Hide();
-                    }
-                    PriceRatio.Draw();
-                    NotionalRatio.Draw();
-                    RestrictedDeals.Draw();
-                } else {
-                    PlaceOrders.Hide();
-                    PriceRatio.Hide();
-                    NotionalRatio.Hide();
-                    RestrictedDeals.Hide();
-                }
-                CancelOrders.Hide();
-            }
+        bool const position_status = PositionReporter.getStatus();
+        if (orderExists()) {
+            CancelOrders.DrawFresh();
+            PlaceOrders.Hide();
+            Price.Hide();
+            PriceRatio.Hide();
+            Volume.Hide();
+            NotionalRatio.Hide();
+            RestrictedDeals.Hide();
+            DrawDeals.Hide();
+            DrawPositions.Hide();
+            DrawMarginCall.Hide();
         } else {
-            if (orderExists()) {
-                CancelOrders.DrawFresh();
-                PlaceOrders.Hide();
-                Price.Hide();
-                PriceRatio.Hide();
-                Volume.Hide();
-                NotionalRatio.Hide();
-                RestrictedDeals.Hide();
-                DrawDeals.Hide();
-                DrawPositions.Hide();
-                DrawMarginCall.Hide();
-            } else {
-                DrawDeals.DrawKeepState();
-                DrawPositions.DrawKeepState();
+            CancelOrders.Hide();
+            DrawDeals.DrawKeepState();
+            if (DrawDeals.State()) {
+                if (!position_status) {
+                    Price.Draw();
+                    Volume.Draw();
+                }
+                PriceRatio.Draw();
+                NotionalRatio.Draw();
 
-                if (DrawDeals.State() || DrawPositions.State()) {
-                    if (DrawDeals.State()) {
+                DrawPositions.DrawKeepState();
+                if (DrawPositions.State()) {
+                    RestrictedDeals.Draw();
+                    DrawMarginCall.DrawKeepState();
+                    if (DrawMarginCall.State()) {
                         PlaceOrders.DrawKeepState();
                     } else {
                         PlaceOrders.Hide();
                     }
-                    Price.Draw();
-                    PriceRatio.Draw();
-                    Volume.Draw();
-                    NotionalRatio.Draw();
-                    RestrictedDeals.Draw();
                 } else {
                     PlaceOrders.Hide();
-                    Price.Hide();
-                    PriceRatio.Hide();
-                    Volume.Hide();
-                    NotionalRatio.Hide();
+                    DrawMarginCall.Hide();
                     RestrictedDeals.Hide();
                 }
-                CancelOrders.Hide();
+            } else {
+                Price.Hide();
+                Volume.Hide();
+                PriceRatio.Hide();
+                NotionalRatio.Hide();
+
+                PlaceOrders.Hide();
+                DrawMarginCall.Hide();
+                RestrictedDeals.Hide();
+                DrawPositions.Hide();
             }
-            //}
+            // DrawPositions.DrawKeepState();
+
+            /*if (DrawDeals.State() || DrawPositions.State()) {
+                if (DrawDeals.State()) {
+                    PlaceOrders.DrawFresh();
+                } else {
+                    PlaceOrders.Hide();
+                }
+                if (DrawPositions.State()) {
+                    DrawMarginCall.DrawFresh();
+                } else {
+                    DrawMarginCall.Hide();
+                }
+                if (!position_status) {
+                    Price.Draw();
+                    Volume.Draw();
+                }
+                PriceRatio.Draw();
+                NotionalRatio.Draw();
+                RestrictedDeals.Draw();
+            }
+            else {
+                if (!position_status) {
+                    Price.Hide();
+                    Volume.Hide();
+                }
+                PlaceOrders.Hide();
+                PriceRatio.Hide();
+                NotionalRatio.Hide();
+                RestrictedDeals.Hide();
+            }*/
+            // PlaceOrders.DrawFresh();
         }
     }
 
@@ -170,10 +187,20 @@ class CTradeBuilder : public ITradeBuilder {
         DrawMarginCall.Hide();
     }
 
-    void onTick() const override {
+    void onTick() override {
         // Trade.UpdatePrice();
         // Price.UpdatePrice();
         //  CalcLevels();
+        if (DrawDeals.State() && m_quote_value != MinMax.process(m_quote_value, SymbolInfoDouble(Symbol(), m_quote_type))) {
+            m_quote_value = SymbolInfoDouble(Symbol(), m_quote_type);
+            if (!PositionReporter.getStatus()) {
+                Price.setValue(m_quote_value);
+                PrintFormat("%s %s %f %f", __FUNCTION__, EnumToString(m_quote_type), m_quote_value, Price.getValue());
+            } else {
+                PrintFormat("%s %s %f", __FUNCTION__, EnumToString(m_quote_type), m_quote_value);
+            }
+            drawLevels();
+        }
     }
 
     // void onTrade() const { /*PrintFormat("%s", __FUNCTION__);*/
@@ -221,7 +248,7 @@ class CTradeBuilder : public ITradeBuilder {
     bool onButton(string const &sparam) {
         if (PlaceOrders.m_name == sparam) {
             // if (DrawDeals.State()) {
-            m_orders_count = DrawDeals.SizeCounter();
+            // m_orders_count = DrawDeals.SizeCounter();
             // PrintFormat("%s %d", __FUNCTION__, m_orders_count);
             MakeOrders();
             //}
@@ -233,7 +260,7 @@ class CTradeBuilder : public ITradeBuilder {
             DrawPositions.Draw();
             EditableCollection.Draw();*/
             // m_orders_count = 0;
-            m_orders_count = 0;
+            // m_orders_count = 0;
             // PrintFormat("%s %d", __FUNCTION__, m_orders_count);
             RemoveOrders();
             // DrawDeals.ResetCounter();
@@ -242,9 +269,9 @@ class CTradeBuilder : public ITradeBuilder {
             //  DrawMarginCall.Draw();
             //  PrintFormat("%s %f", __FUNCTION__, PositionGetDouble(POSITION_PRICE_CURRENT));
             //  return false;
-        } else if (DrawDeals.m_name == sparam || DrawPositions.m_name == sparam) {
-            bool const draw_deals{DrawDeals.State()}, const draw_positions{DrawPositions.State()};
-            // PrintFormat("%s %s %s", __FUNCTION__, string(draw_deals), string(draw_positions));
+        } else if (DrawDeals.m_name == sparam || DrawPositions.m_name == sparam || DrawMarginCall.m_name == sparam) {
+            // bool const draw_deals{DrawDeals.State()}, const draw_positions{DrawPositions.State()};
+            //  PrintFormat("%s %s %s", __FUNCTION__, string(draw_deals), string(draw_positions));
             /*if (draw_deals || draw_positions) {
                 // if (m_reset_bool) {
                 //  EditableCollection[1].Draw();
@@ -267,27 +294,39 @@ class CTradeBuilder : public ITradeBuilder {
                 m_reset_bool = true;
             }*/
             Draw();
+            // ChartRedraw();
 
-            if (draw_deals) {
-                // PlaceOrders.DrawFresh();
-            } else {
-                // PlaceOrders.Hide();
-                DrawDeals.DeleteLines();
-            }
+            // if (DrawDeals.State()) {
+            //  PlaceOrders.DrawFresh();
+            //} else {
+            // PlaceOrders.Hide();
 
-            if (!draw_positions) {
-                DrawPositions.DeleteLines();
-            }
+            DrawDeals.DeleteLines();
+            //}
+
+            // if (!DrawPositions.State()) {
+            DrawPositions.DeleteLines();
+            //}
+
+            // if (!DrawMarginCall.State()) {
+            DrawMarginCall.DeleteLines();
+            //}
+            drawLevels();
+            ChartRedraw();
+            // PrintFormat("%s %s", __FUNCTION__, sparam);
 
             return true;
         } /*else if (DrawMarginCall.name == sparam) {
             DrawMarginCall.Draw();
         }*/
-
-        return EditableCollection.onButton(sparam);
+        else if (EditableCollection.onButton(sparam)) {
+            // PrintFormat("%s %s", __FUNCTION__, sparam);
+            drawLevels();
+        }
+        return false;
     }
 
-    uint getCount() const {
+    uint calcLevels() const {
         double const balance{PositionReporter.getBalance()},
             equity{PositionReporter.getEquity()},
             margin{PositionReporter.getMargin()},
@@ -296,19 +335,19 @@ class CTradeBuilder : public ITradeBuilder {
             price_ratio{PriceRatio.getValue()},
             notional_ratio{NotionalRatio.getValue()};
         double
-            price{PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue()},
+            price{PositionReporter.getStatus() ? MinMax.process(PositionReporter.getPriceOpen(), SymbolInfoDouble(Symbol(), m_quote_type)) : Price.getValue()},
             volume{PositionReporter.getStatus() ? PositionReporter.getVolume() : Volume.getValue()}, volume_total{volume},
             notional{price * volume}, notional_total{notional},
-            Margin{Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote)};
+            Margin{Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote_type)};
 
         uint counter{0};
-        while (Margin * MarginCall < equity && /*volume_total < Volumes.VolumeLimit*/ Volumes.VolumeLimit ? volume_total < Volumes.VolumeLimit : true && counter < Volumes.AccountLimitOrders) {
+        while (Margin * MarginCall < equity && /*volume_total < Volumes.VolumeLimit*/ (Volumes.VolumeLimit ? volume_total < Volumes.VolumeLimit : true) && counter < Volumes.AccountLimitOrders) {
             price = fmax(0, MinMax.process(price * price_ratio, price + m_direction * Point()));
             notional *= notional_ratio;
             volume = floor(notional / price / Volumes.VolumeStep) * Volumes.VolumeStep;
             volume_total += volume;
             notional_total += volume * price;
-            Margin += Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote);
+            Margin += Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote_type);
             ++counter;  // + uint(volume / Volumes.VolumeMax);
         }
         // PrintFormat("%s equity %f margin %f profit %f volumeLimit %f limitOrders %d", __FUNCTION__, equity, margin, profit, Volumes.VolumeLimit, Volumes.AccountLimitOrders);
@@ -317,8 +356,8 @@ class CTradeBuilder : public ITradeBuilder {
         return counter;
     }
 
-    void CalcLevels() const {
-        bool const state_deals{DrawDeals.State()}, const state_positions{DrawPositions.State()};
+    void drawLevels() const {
+        bool const state_deals{DrawDeals.State()}, const state_positions{DrawPositions.State()}, const state_margincall{DrawMarginCall.State()};
         if (state_deals || state_positions) {
             double const balance{PositionReporter.getBalance()},
                 equity{PositionReporter.getEquity()},
@@ -327,24 +366,25 @@ class CTradeBuilder : public ITradeBuilder {
                 swap{PositionReporter.getSwap()},
                 price_ratio{PriceRatio.getValue()},
                 notional_ratio{NotionalRatio.getValue()};
-            // PrintFormat("%s %f %f %f %f", __FUNCTION__, PositionReporter.getPrice(), Price.getValue(), SymbolInfoDouble(Symbol(), m_quote), MinMax.process(PositionReporter.getPrice(), Price.State() ? Price.getValue() : SymbolInfoDouble(Symbol(), m_quote)));
+            // PrintFormat("%s %s %f %f %f | %f", __FUNCTION__, string(PositionReporter.getStatus()), PositionReporter.getPriceOpen(), PositionReporter.getPriceCurrent(), Price.getValue(), SymbolInfoDouble(Symbol(), m_quote));
             double
-                price{PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue()},
+                price{PositionReporter.getStatus() ? MinMax.process(PositionReporter.getPriceOpen(), SymbolInfoDouble(Symbol(), m_quote_type)) : Price.getValue()},
                 volume{PositionReporter.getStatus() ? PositionReporter.getVolume() : Volume.getValue()}, volume_total{volume},
                 notional{price * volume}, notional_total{notional},
-                Margin{Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote)};
-            // PrintFormat("%s %f %f %f %f %f %f", __FUNCTION__, price, volume, notional_total, Contract, Leverage, Margin);
+                Margin{Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote_type)};
+            // PrintFormat("%s %f %f %f %f %f %f | %f", __FUNCTION__, price, volume, notional_total, Contract, Leverage, Margin, notional_total * Contract / Leverage);
+            //  PrintFormat("%s %f", __FUNCTION__, price);
             DrawDeals.ResetCounter();
             DrawPositions.ResetCounter();
-            while (Margin * MarginCall < equity && /*volume_total < Volumes.VolumeLimit*/ Volumes.VolumeLimit ? volume_total < Volumes.VolumeLimit : true && fmax(DrawDeals.SizeCounter(), DrawPositions.SizeCounter()) < Volumes.AccountLimitOrders) {
+            DrawMarginCall.ResetCounter();
+            while (Margin * MarginCall < equity && /*volume_total < Volumes.VolumeLimit*/ (Volumes.VolumeLimit ? volume_total < Volumes.VolumeLimit : true) && fmax(DrawDeals.SizeCounter(), fmax(DrawPositions.SizeCounter(), DrawMarginCall.SizeCounter())) < Volumes.AccountLimitOrders) {
                 if (state_deals) {
                     double rest_volume{volume}, curr_volume{rest_volume};
 
-                    DrawMarginCall.Push(price - Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote) / (Contract * volume), 1);
-                    double price_drop = Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote);
-                    // PrintFormat("%s %u %f", __FUNCTION__, DrawDeals.SizeCounter(), price_drop);
-                    // if (MinMax.process(PositionReporter.getPrice(), SymbolInfoDouble(Symbol(), m_quote))) {
-                    // PrintFormat("%s %f %f", __FUNCTION__, PositionReporter.getPrice(), SymbolInfoDouble(Symbol(), m_quote));
+                    // double price_drop = Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote_type);
+                    //  PrintFormat("%s %u %f", __FUNCTION__, DrawDeals.SizeCounter(), price_drop);
+                    //  if (MinMax.process(PositionReporter.getPrice(), SymbolInfoDouble(Symbol(), m_quote))) {
+                    //  PrintFormat("%s %f %f", __FUNCTION__, PositionReporter.getPrice(), SymbolInfoDouble(Symbol(), m_quote));
                     for (uint i{0}, num_iter{uint(floor(volume / Volumes.VolumeMax))}; i <= num_iter; ++i) {
                         curr_volume = Volumes.VolumeMax <= rest_volume ? Volumes.VolumeMax : rest_volume;
                         DrawDeals.Push(price, curr_volume);
@@ -352,9 +392,15 @@ class CTradeBuilder : public ITradeBuilder {
                         rest_volume -= curr_volume;
                     }
                     //}
+                    // DrawPositions.Push(notional_total / volume_total, volume_total);
+                    // DrawMarginCall.Push(price - Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote_type) / (Contract * volume), volume_total);
                 }
-                if (state_positions)
+                if (state_positions) {
                     DrawPositions.Push(notional_total / volume_total, volume_total);
+                }
+                if (state_margincall) {
+                    DrawMarginCall.Push(price + m_direction * Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote_type) / (Contract * volume), volume_total);
+                }
 
                 price = fmax(0, MinMax.process(price * price_ratio, price + m_direction * Point()));
                 notional *= notional_ratio;
@@ -362,27 +408,30 @@ class CTradeBuilder : public ITradeBuilder {
                 volume = fmax(floor(notional / price / Volumes.VolumeStep) * Volumes.VolumeStep, Volumes.VolumeStep);
                 volume_total += volume;
                 notional_total += volume * price;
-                Margin += Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote);
+                Margin += Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote_type);
+                // PrintFormat("%s %f %f %f %f | %s", __FUNCTION__, volume, volume_total, notional, notional_total, string(Margin * MarginCall < equity));
             }
             uint const restricted_deals{uint(RestrictedDeals.getValue())};
             DrawDeals.Drop(restricted_deals);
             DrawPositions.Drop(restricted_deals);
             DrawMarginCall.Drop(restricted_deals);
 
-            if (state_deals)
-                DrawDeals.DrawLines();
-            if (state_positions) {
-                DrawPositions.DrawLines();
-                DrawMarginCall.DrawLines();
-                // PrintFormat("%s VolumeLots %f", __FUNCTION__, volume_total);
-                // PrintFormat("%s Leverage %f", __FUNCTION__, Leverage);
-                // PrintFormat("%s Contract %f", __FUNCTION__, Contract);
-                // PrintFormat("%s Volume %f", __FUNCTION__, Contract * volume_total);
-                // PrintFormat("%s Price %f", __FUNCTION__, PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue());
-                // PrintFormat("%s NotionalDrop %f", __FUNCTION__, Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote));
-                // PrintFormat("%s PriceDrop %f", __FUNCTION__, Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote) / (Contract * volume));
-                // PrintFormat("%s PriceMargin %f", __FUNCTION__, (PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue()) - Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote) / (Contract * volume));
-            }
+            // if (state_deals)
+            DrawDeals.DrawLines();
+            // if (state_positions) {
+            DrawPositions.DrawLines();
+            // DrawMarginCall.DrawLines();
+            //  PrintFormat("%s VolumeLots %f", __FUNCTION__, volume_total);
+            //  PrintFormat("%s Leverage %f", __FUNCTION__, Leverage);
+            //  PrintFormat("%s Contract %f", __FUNCTION__, Contract);
+            //  PrintFormat("%s Volume %f", __FUNCTION__, Contract * volume_total);
+            //  PrintFormat("%s Price %f", __FUNCTION__, PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue());
+            //  PrintFormat("%s NotionalDrop %f", __FUNCTION__, Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote));
+            //  PrintFormat("%s PriceDrop %f", __FUNCTION__, Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote) / (Contract * volume));
+            //  PrintFormat("%s PriceMargin %f", __FUNCTION__, (PositionReporter.getStatus() ? PositionReporter.getPrice() : Price.getValue()) - Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote) / (Contract * volume));
+            //}
+            // if (state_margincall)
+            DrawMarginCall.DrawLines();
         }
 
         // ObjectCreate(ChartID(), "MarginCall", OBJ_HLINE, 0, 0, PositionGetDouble(POSITION_PRICE_CURRENT) - Settings.Direction * Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, Settings.QuoteOut) / (Contract * PositionGetDouble(POSITION_VOLUME)));
@@ -393,9 +442,9 @@ class CTradeBuilder : public ITradeBuilder {
         // return DrawDeals.SizeCounter();
     }
 
-    uint OrdersCount() const {
+    /*uint OrdersCount() const {
         return m_orders_count;
-    }
+    }*/
 
    private:
     void MakeOrders() const {
