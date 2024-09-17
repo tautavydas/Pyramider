@@ -191,11 +191,11 @@ class CTradeBuilder : public ITradeBuilder {
         // Trade.UpdatePrice();
         // Price.UpdatePrice();
         //  CalcLevels();
-        if (DrawDeals.State() && m_quote_value != MinMax.process(m_quote_value, SymbolInfoDouble(Symbol(), m_quote_type))) {
-            m_quote_value = SymbolInfoDouble(Symbol(), m_quote_type);
+        if (DrawDeals.State() /*&& m_quote_value != MinMax.process(m_quote_value, SymbolInfoDouble(Symbol(), m_quote_type))*/) {
+            // m_quote_value = SymbolInfoDouble(Symbol(), m_quote_type);
             if (!PositionReporter.getStatus()) {
-                Price.setValue(m_quote_value);
-                PrintFormat("%s %s %f %f", __FUNCTION__, EnumToString(m_quote_type), m_quote_value, Price.getValue());
+                Price.setValue(MinMax.process(Price.getValue(), SymbolInfoDouble(Symbol(), m_quote_type)));
+                // PrintFormat("%s %s %f %f", __FUNCTION__, EnumToString(m_quote_type), m_quote_value, Price.getValue());
             } else {
                 PrintFormat("%s %s %f", __FUNCTION__, EnumToString(m_quote_type), m_quote_value);
             }
