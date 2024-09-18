@@ -36,7 +36,7 @@ class CTradeBuilder : public ITradeBuilder {
     CConverter const *const Converter;
 
     ENUM_SYMBOL_INFO_DOUBLE const m_quote_type;
-    double m_quote_value;
+    // double m_quote_value;
     ENUM_ORDER_TYPE const m_type;
     int const m_direction;
     bool m_reset_bool;
@@ -60,7 +60,7 @@ class CTradeBuilder : public ITradeBuilder {
           PlaceOrders(new ActionButton(proportions_manager, 21, position_type, "Limit")),
           CancelOrders(new ActionButton(proportions_manager, 21, position_type, "Cancel")),
           m_quote_type(position_type == POSITION_TYPE_BUY ? SYMBOL_ASK : SYMBOL_BID),
-          m_quote_value(SymbolInfoDouble(Symbol(), m_quote_type)),
+          // m_quote_value(SymbolInfoDouble(Symbol(), m_quote_type)),
           m_type(position_type == POSITION_TYPE_BUY ? ORDER_TYPE_BUY_LIMIT : ORDER_TYPE_SELL_LIMIT),
           m_direction(position_type == POSITION_TYPE_BUY ? -1 : 1),
           m_reset_bool(true) /*,
@@ -193,11 +193,13 @@ class CTradeBuilder : public ITradeBuilder {
         //  CalcLevels();
         if (DrawDeals.State() /*&& m_quote_value != MinMax.process(m_quote_value, SymbolInfoDouble(Symbol(), m_quote_type))*/) {
             // m_quote_value = SymbolInfoDouble(Symbol(), m_quote_type);
-            if (!PositionReporter.getStatus()) {
+            if (PositionReporter.getStatus()) {
+                Price.setValue(MinMax.process(Price.getValue(), MinMax.process(PositionReporter.getPriceOpen(), PositionReporter.getPriceCurrent())));
+                // PrintFormat("%s %s %f", __FUNCTION__, EnumToString(m_quote_type), m_quote_value);
+
+            } else {
                 Price.setValue(MinMax.process(Price.getValue(), SymbolInfoDouble(Symbol(), m_quote_type)));
                 // PrintFormat("%s %s %f %f", __FUNCTION__, EnumToString(m_quote_type), m_quote_value, Price.getValue());
-            } else {
-                PrintFormat("%s %s %f", __FUNCTION__, EnumToString(m_quote_type), m_quote_value);
             }
             drawLevels();
         }
