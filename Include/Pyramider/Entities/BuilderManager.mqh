@@ -82,7 +82,7 @@ class CBuilderManager final {
                 TradeBuilders[i].UpdatePosition();
             }
         }
-        if (!m_initialized || proportions_changed) {
+        if (!m_initialized || proportions_changed || m_orders_total != OrdersTotal()) {
             PeriodCollection.Draw();
             PeriodCollection.UpdateButton();
             // PrintFormat("%s", __FUNCTION__);
@@ -113,6 +113,7 @@ class CBuilderManager final {
                 TradeBuilders[(PositionType + 1) % 2].Hide();
             }
             m_initialized = true;
+            m_orders_total = OrdersTotal();
         }
     }
 
@@ -251,31 +252,36 @@ class CBuilderManager final {
         //  PrintFormat("%s %u %u | %u", __FUNCTION__, TradeBuilders[0].OrdersCount(), TradeBuilders[1].OrdersCount(), OrdersTotal());
         // }
         //  PrintFormat("%s %u %u", __FUNCTION__, m_orders_total, OrdersTotal());
-        if (m_orders_total != OrdersTotal()) {
-            m_orders_total = OrdersTotal();
-            // PrintFormat("%s %f", __FUNCTION__, PositionGetDouble(POSITION_VOLUME));
-            /*CPositionReporter::EnumPositionType const PositionType{PositionReporter.getPositionType()};
-                if (PositionType == CPositionReporter::EnumPositionType::NONE) {
-                    for (uint i{0}; i < TradeBuilders.Size(); ++i) {
-                        TradeBuilders[i].Draw();
-                    }
-                } else {
-                    TradeBuilders[PositionType % 2].Draw();
-                    TradeBuilders[(PositionType + 1) % 2].Hide();
-                }*/
-            Draw();
+        // if (m_orders_total != OrdersTotal()) {
+        //    m_orders_total = OrdersTotal();
+        //    PrintFormat("%s %u", __FUNCTION__, m_orders_total);
+        // PrintFormat("%s %f", __FUNCTION__, PositionGetDouble(POSITION_VOLUME));
+        /*CPositionReporter::EnumPositionType const PositionType{PositionReporter.getPositionType()};
+            if (PositionType == CPositionReporter::EnumPositionType::NONE) {
+                for (uint i{0}; i < TradeBuilders.Size(); ++i) {
+                    TradeBuilders[i].Draw();
+                }
+            } else {
+                TradeBuilders[PositionType % 2].Draw();
+                TradeBuilders[(PositionType + 1) % 2].Hide();
+            }*/
+        Draw();
+        // PrintFormat("%s %d", __FUNCTION__, m_orders_total);
+
+        /*if (OrdersTotal() == 0) {
             ChartRedraw();
-        }
+        }*/
+        //  }
     }
 
-   private:
-    // bool isNewPosition() {
-    //     // if (PositionSelect(Symbol()) && HistorySelectByPosition(PositionGetInteger(POSITION_TICKET)) && m_history_orders_total != HistoryOrdersTotal()) {
-    //     if (PositionReporter.getStatus() && m_history_orders_total != HistoryOrdersTotal()) {
-    //         m_history_orders_total = HistoryOrdersTotal();
-    //         // PrintFormat("%s %d %d", __FUNCTION__, m_history_orders_total, OrdersTotal());
-    //         return true;
-    //     }
+    // private:
+    //  bool isNewPosition() {
+    //      // if (PositionSelect(Symbol()) && HistorySelectByPosition(PositionGetInteger(POSITION_TICKET)) && m_history_orders_total != HistoryOrdersTotal()) {
+    //      if (PositionReporter.getStatus() && m_history_orders_total != HistoryOrdersTotal()) {
+    //          m_history_orders_total = HistoryOrdersTotal();
+    //          // PrintFormat("%s %d %d", __FUNCTION__, m_history_orders_total, OrdersTotal());
+    //          return true;
+    //      }
 
     //     return false;
     // }
