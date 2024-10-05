@@ -1,6 +1,6 @@
 // ###<Experts/Pyramider.mq5>
 
-struct CMagicNumber final {
+/*struct CMagicNumber final {
     long const Number;
-    CMagicNumber() : Number(666666666666666666) {}
-};
+    CMagicNumber() : Number(666) {}
+};*/

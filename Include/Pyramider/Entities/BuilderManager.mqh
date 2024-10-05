@@ -74,6 +74,11 @@ class CBuilderManager final {
     //}
 
     void Draw() {
+        /*if (!m_initialized) {
+            PeriodCollection.UpdateButton();
+            m_initialized = true;
+            PeriodCollection.Draw();
+        }*/
         bool const proportions_changed = ProportionsManager.IsProportionsChanged();
         if (proportions_changed) {
             ProportionsManager.UpdateProportions();
@@ -81,11 +86,12 @@ class CBuilderManager final {
             for (uint i{0}; i < TradeBuilders.Size(); ++i) {
                 TradeBuilders[i].UpdatePosition();
             }
-        }
-        if (!m_initialized || proportions_changed || m_orders_total != OrdersTotal()) {
             PeriodCollection.Draw();
-            PeriodCollection.UpdateButton();
-            // PrintFormat("%s", __FUNCTION__);
+        }
+        int const orders_total = OrdersTotal();
+        if (proportions_changed || m_orders_total != orders_total) {
+            // PeriodCollection.Draw();
+            //  PrintFormat("%s", __FUNCTION__);
             /*switch (PositionReporter.getPositionType()) {
                 case CPositionReporter::EnumPositionType::LONG:
                     LongBuilder.Draw();
@@ -112,8 +118,9 @@ class CBuilderManager final {
                 TradeBuilders[PositionType % 2].Draw();
                 TradeBuilders[(PositionType + 1) % 2].Hide();
             }
-            m_initialized = true;
-            m_orders_total = OrdersTotal();
+            m_orders_total = orders_total;
+            // PrintFormat("%s %u", __FUNCTION__, m_orders_total);
+            //  ChartRedraw();
         }
     }
 
@@ -146,7 +153,7 @@ class CBuilderManager final {
             TradeBuilders[i].onTick();
             TradeBuilders[i].DrawLevels();
         }*/
-        ChartRedraw();
+        // ChartRedraw();
     }
 
     void onEdit(string const &sparam) const {
@@ -265,8 +272,15 @@ class CBuilderManager final {
                 TradeBuilders[PositionType % 2].Draw();
                 TradeBuilders[(PositionType + 1) % 2].Hide();
             }*/
+        // PrintFormat("%s %u", __FUNCTION__, OrdersTotal());
         Draw();
-        // PrintFormat("%s %d", __FUNCTION__, m_orders_total);
+        /*if (OrdersTotal() == 0) {
+            TradeBuilders[0].cancelOrdersHide();
+            TradeBuilders[1].cancelOrdersHide();
+        }*/
+
+        // ChartRedraw();
+        //  PrintFormat("%s %d", __FUNCTION__, m_orders_total);
 
         /*if (OrdersTotal() == 0) {
             ChartRedraw();

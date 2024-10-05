@@ -4,6 +4,7 @@
 #include <Pyramider/Objects/ActionButton.mqh>
 #include <Pyramider/Objects/DrawButton.mqh>
 #include <Pyramider/Objects/EditableObject.mqh>
+// #include <Pyramider/Objects/TextObject.mqh>
 
 class ITradeBuilder {
    public:
@@ -15,9 +16,10 @@ class ITradeBuilder {
     virtual void onPositionChange() const = 0;
     virtual bool onEdit(string const &sparam) const = 0;
     virtual bool onButton(string const &sparam) = 0;
-    virtual void onTrade() = 0;
+    // virtual void onTrade() = 0;
     virtual void drawLevels() const = 0;
-    // virtual uint OrdersCount() const = 0;
+    // virtual void cancelOrdersHide() const = 0;
+    //  virtual uint OrdersCount() const = 0;
 };
 
 template <typename ExtremumType>
@@ -32,6 +34,7 @@ class CTradeBuilder : public ITradeBuilder {
 
    private:
     ActionButton *const PlaceOrders, *const CancelOrders;
+    // CTextObject *const DisplayText;
     ExtremumType const MinMax;
     CConverter const *const Converter;
 
@@ -39,6 +42,7 @@ class CTradeBuilder : public ITradeBuilder {
     // double m_quote_value;
     ENUM_ORDER_TYPE const m_type;
     int const m_direction;
+    ulong const m_magic_number;
     bool m_reset_bool;
     // uint m_orders_count;
 
@@ -59,10 +63,12 @@ class CTradeBuilder : public ITradeBuilder {
           DrawMarginCall(new DrawButton(proportions_manager, 19, position_type, "MarginCall", 3)),
           PlaceOrders(new ActionButton(proportions_manager, 21, position_type, "Limit")),
           CancelOrders(new ActionButton(proportions_manager, 21, position_type, "Cancel")),
+          // DisplayText(new CTextObject(proportions_manager, 8, position_type, "Display", Volume.m_digits)),
           m_quote_type(position_type == POSITION_TYPE_BUY ? SYMBOL_ASK : SYMBOL_BID),
           // m_quote_value(SymbolInfoDouble(Symbol(), m_quote_type)),
           m_type(position_type == POSITION_TYPE_BUY ? ORDER_TYPE_BUY_LIMIT : ORDER_TYPE_SELL_LIMIT),
           m_direction(position_type == POSITION_TYPE_BUY ? -1 : 1),
+          m_magic_number(position_type == POSITION_TYPE_BUY ? 666 : 667),
           m_reset_bool(true) /*,
            m_orders_count(position_type == POSITION_TYPE_BUY ? 14 : 15)*/
     {}
@@ -75,7 +81,12 @@ class CTradeBuilder : public ITradeBuilder {
         delete DrawDeals;
         delete DrawPositions;
         delete DrawMarginCall;
+        // delete DisplayText;
     }
+
+    /*void cancelOrdersHide() const {
+        CancelOrders.Hide();
+    }*/
 
     void UpdatePosition() override {
         PlaceOrders.UpdatePosition();
@@ -83,6 +94,7 @@ class CTradeBuilder : public ITradeBuilder {
         Price.UpdatePosition();
         PriceRatio.UpdatePosition();
         Volume.UpdatePosition();
+        // DisplayText.UpdatePosition();
         NotionalRatio.UpdatePosition();
         RestrictedDeals.UpdatePosition();
         DrawDeals.UpdatePosition();
@@ -92,25 +104,32 @@ class CTradeBuilder : public ITradeBuilder {
 
     void Draw() override {
         bool const position_status = PositionReporter.getStatus();
-        if (orderExists()) {
+        bool const order_exists = orderExists();
+        // PrintFormat("%s %s", __FUNCTION__, string(order_exists));
+        if (order_exists) {
             CancelOrders.DrawFresh();
             PlaceOrders.Hide();
             Price.Hide();
             PriceRatio.Hide();
             Volume.Hide();
+            // DisplayText.Hide();
             NotionalRatio.Hide();
             RestrictedDeals.Hide();
             DrawDeals.Hide();
             DrawPositions.Hide();
             DrawMarginCall.Hide();
         } else {
+            // PrintFormat("%s", __FUNCTION__);
             CancelOrders.Hide();
             DrawDeals.DrawKeepState();
             if (DrawDeals.State()) {
-                if (!position_status) {
-                    Price.Draw();
-                    Volume.Draw();
-                }
+                Price.Draw();
+                // if (!position_status) {
+                //  Price.Draw();
+                Volume.Draw();
+                //} else {
+                // DisplayText.Draw();
+                //}
                 PriceRatio.Draw();
                 NotionalRatio.Draw();
 
@@ -131,6 +150,7 @@ class CTradeBuilder : public ITradeBuilder {
             } else {
                 Price.Hide();
                 Volume.Hide();
+                // DisplayText.Hide();
                 PriceRatio.Hide();
                 NotionalRatio.Hide();
 
@@ -180,6 +200,8 @@ class CTradeBuilder : public ITradeBuilder {
         Price.Hide();
         PriceRatio.Hide();
         Volume.Hide();
+        // DisplayText.Hide();
+
         NotionalRatio.Hide();
         RestrictedDeals.Hide();
         DrawDeals.Hide();
@@ -188,19 +210,14 @@ class CTradeBuilder : public ITradeBuilder {
     }
 
     void onTick() override {
-        // Trade.UpdatePrice();
-        // Price.UpdatePrice();
-        //  CalcLevels();
-        if (DrawDeals.State() /*&& m_quote_value != MinMax.process(m_quote_value, SymbolInfoDouble(Symbol(), m_quote_type))*/) {
-            // m_quote_value = SymbolInfoDouble(Symbol(), m_quote_type);
-            if (PositionReporter.getStatus()) {
-                Price.setValue(MinMax.process(Price.getValue(), MinMax.process(PositionReporter.getPriceOpen(), PositionReporter.getPriceCurrent())));
-                // PrintFormat("%s %s %f", __FUNCTION__, EnumToString(m_quote_type), m_quote_value);
+        if (PositionReporter.getStatus()) {
+            Price.setValue(MinMax.process(Price.getValue(), MinMax.process(PositionReporter.getPriceOpen(), PositionReporter.getPriceCurrent())));
 
-            } else {
-                Price.setValue(MinMax.process(Price.getValue(), SymbolInfoDouble(Symbol(), m_quote_type)));
-                // PrintFormat("%s %s %f %f", __FUNCTION__, EnumToString(m_quote_type), m_quote_value, Price.getValue());
-            }
+        } else {
+            Price.setValue(MinMax.process(Price.getValue(), SymbolInfoDouble(Symbol(), m_quote_type)));
+        }
+
+        if (DrawDeals.State()) {
             drawLevels();
         }
     }
@@ -227,51 +244,28 @@ class CTradeBuilder : public ITradeBuilder {
         return EditableCollection.onEdit(sparam);
     }
 
-    void onTrade() {
-        /*if (orderExists()) {
-            CancelOrders.DrawFresh();
-            PlaceOrders.Hide();
-            DrawDeals.Hide();
-            DrawPositions.Hide();
-            Price.Hide();
-            PriceRatio.Hide();
-            Volume.Hide();
-            NotionalRatio.Hide();
-            RestrictedDeals.Hide();
-        } else {
-            CancelOrders.Hide();
-            DrawDeals.DrawFresh();
-            DrawPositions.DrawFresh();
-        }*/
-        Draw();
-        PrintFormat("%s", __FUNCTION__);
-    }
+    // void onTrade() {
+    /*if (orderExists()) {
+        CancelOrders.DrawFresh();
+        PlaceOrders.Hide();
+        DrawDeals.Hide();
+        DrawPositions.Hide();
+        Price.Hide();
+        PriceRatio.Hide();
+        Volume.Hide();
+        NotionalRatio.Hide();
+        RestrictedDeals.Hide();
+    } else {
+        CancelOrders.Hide();
+        DrawDeals.DrawFresh();
+        DrawPositions.DrawFresh();
+    }*/
+    // Draw();
+    // PrintFormat("%s", __FUNCTION__);
+    //}
 
     bool onButton(string const &sparam) {
-        if (PlaceOrders.m_name == sparam) {
-            // if (DrawDeals.State()) {
-            // m_orders_count = DrawDeals.SizeCounter();
-            // PrintFormat("%s %d", __FUNCTION__, m_orders_count);
-            MakeOrders();
-            //}
-            m_reset_bool = true;
-            // return false;
-        } else if (CancelOrders.m_name == sparam) {
-            /*CancelOrders.Hide();
-            DrawDeals.Draw();
-            DrawPositions.Draw();
-            EditableCollection.Draw();*/
-            // m_orders_count = 0;
-            // m_orders_count = 0;
-            // PrintFormat("%s %d", __FUNCTION__, m_orders_count);
-            RemoveOrders();
-            // DrawDeals.ResetCounter();
-            // DrawPositions.ResetCounter();
-            // Draw();
-            //  DrawMarginCall.Draw();
-            //  PrintFormat("%s %f", __FUNCTION__, PositionGetDouble(POSITION_PRICE_CURRENT));
-            //  return false;
-        } else if (DrawDeals.m_name == sparam || DrawPositions.m_name == sparam || DrawMarginCall.m_name == sparam) {
+        if (DrawDeals.m_name == sparam || DrawPositions.m_name == sparam || DrawMarginCall.m_name == sparam) {
             // bool const draw_deals{DrawDeals.State()}, const draw_positions{DrawPositions.State()};
             //  PrintFormat("%s %s %s", __FUNCTION__, string(draw_deals), string(draw_positions));
             /*if (draw_deals || draw_positions) {
@@ -314,15 +308,36 @@ class CTradeBuilder : public ITradeBuilder {
             DrawMarginCall.DeleteLines();
             //}
             drawLevels();
-            ChartRedraw();
-            // PrintFormat("%s %s", __FUNCTION__, sparam);
+            // ChartRedraw();
+            //  PrintFormat("%s %s", __FUNCTION__, sparam);
 
             return true;
-        } /*else if (DrawMarginCall.name == sparam) {
-            DrawMarginCall.Draw();
-        }*/
-        else if (EditableCollection.onButton(sparam)) {
-            // PrintFormat("%s %s", __FUNCTION__, sparam);
+        } else if (PlaceOrders.m_name == sparam) {
+            // if (DrawDeals.State()) {
+            // m_orders_count = DrawDeals.SizeCounter();
+            // PrintFormat("%s %d", __FUNCTION__, m_orders_count);
+            MakeOrders();
+            //}
+            m_reset_bool = true;
+            // return false;
+        } else if (CancelOrders.m_name == sparam) {
+            /*CancelOrders.Hide();
+            DrawDeals.Draw();
+            DrawPositions.Draw();
+            EditableCollection.Draw();*/
+            // m_orders_count = 0;
+            // m_orders_count = 0;
+            // PrintFormat("%s %d", __FUNCTION__, m_orders_count);
+            RemoveOrders();
+            // CancelOrders.Hide();
+            //  DrawDeals.ResetCounter();
+            //  DrawPositions.ResetCounter();
+            //  Draw();
+            //   DrawMarginCall.Draw();
+            //   PrintFormat("%s %f", __FUNCTION__, PositionGetDouble(POSITION_PRICE_CURRENT));
+            //   return false;
+        } else if (EditableCollection.onButton(sparam)) {
+            // PrintFormat("%s %s %f", __FUNCTION__, sparam, Price.getValue());
             drawLevels();
         }
         return false;
@@ -337,9 +352,9 @@ class CTradeBuilder : public ITradeBuilder {
             price_ratio{PriceRatio.getValue()},
             notional_ratio{NotionalRatio.getValue()};
         double
-            price{PositionReporter.getStatus() ? MinMax.process(PositionReporter.getPriceOpen(), SymbolInfoDouble(Symbol(), m_quote_type)) : Price.getValue()},
-            volume{PositionReporter.getStatus() ? PositionReporter.getVolume() : Volume.getValue()}, volume_total{volume},
-            notional{price * volume}, notional_total{notional},
+            price{PositionReporter.getStatus() ? MinMax.process(MinMax.process(PositionReporter.getPriceOpen(), SymbolInfoDouble(Symbol(), m_quote_type)), Price.getValue()) : Price.getValue()},
+            volume{Volume.getValue()}, volume_total{volume + (PositionReporter.getStatus() ? PositionReporter.getVolume() : 0.0)},
+            notional{price * volume}, notional_total{notional + (PositionReporter.getStatus() ? PositionReporter.getPriceOpen() * PositionReporter.getVolume() : 0.0)},
             Margin{Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote_type)};
 
         uint counter{0};
@@ -370,12 +385,13 @@ class CTradeBuilder : public ITradeBuilder {
                 notional_ratio{NotionalRatio.getValue()};
             // PrintFormat("%s %s %f %f %f | %f", __FUNCTION__, string(PositionReporter.getStatus()), PositionReporter.getPriceOpen(), PositionReporter.getPriceCurrent(), Price.getValue(), SymbolInfoDouble(Symbol(), m_quote));
             double
-                price{PositionReporter.getStatus() ? MinMax.process(PositionReporter.getPriceOpen(), SymbolInfoDouble(Symbol(), m_quote_type)) : Price.getValue()},
-                volume{PositionReporter.getStatus() ? PositionReporter.getVolume() : Volume.getValue()}, volume_total{volume},
-                notional{price * volume}, notional_total{notional},
+                price{PositionReporter.getStatus() ? MinMax.process(MinMax.process(PositionReporter.getPriceOpen(), SymbolInfoDouble(Symbol(), m_quote_type)), Price.getValue()) : Price.getValue()},
+                volume{Volume.getValue()}, volume_total{volume + (PositionReporter.getStatus() ? PositionReporter.getVolume() : 0.0)},
+                notional{price * volume}, notional_total{notional + (PositionReporter.getStatus() ? PositionReporter.getPriceOpen() * PositionReporter.getVolume() : 0.0)},
                 Margin{Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote_type)};
             // PrintFormat("%s %f %f %f %f %f %f | %f", __FUNCTION__, price, volume, notional_total, Contract, Leverage, Margin, notional_total * Contract / Leverage);
-            //  PrintFormat("%s %f", __FUNCTION__, price);
+            // PrintFormat("%s %f", __FUNCTION__, price);
+            // PrintFormat("%s %f", __FUNCTION__, volume);
             DrawDeals.ResetCounter();
             DrawPositions.ResetCounter();
             DrawMarginCall.ResetCounter();
@@ -466,7 +482,7 @@ class CTradeBuilder : public ITradeBuilder {
                 MqlTradeRequest const Request{TRADE_ACTION_PENDING, Magic.Number, 0, Symbol(), curr_volume, DrawDeals.Levels[counter].m_price, 0, 0, 0, 0, m_type, ORDER_FILLING_FOK, 0, 0, DrawDeals.Name(counter), 0, 0};
                 Send(Request);
             }*/
-            MqlTradeRequest const Request{TRADE_ACTION_PENDING, Magic.Number, 42069, Symbol(), DrawDeals.Levels[counter].m_volume, DrawDeals.Levels[counter].m_price, 0, 0, 0, 0, m_type, ORDER_FILLING_FOK, 0, 0, DrawDeals.Name(counter) + " " + (counter + 1 == DrawDeals.SizeCounter() ? "last" : "not last"), 0, 0};
+            MqlTradeRequest const Request{TRADE_ACTION_PENDING, m_magic_number, 0, Symbol(), DrawDeals.Levels[counter].m_volume, DrawDeals.Levels[counter].m_price, 0, 0, 0, 0, m_type, ORDER_FILLING_FOK, 0, 0, DrawDeals.Name(counter) + " " + (counter + 1 == DrawDeals.SizeCounter() ? "last" : "not last"), 0, 0};
             Send(Request);
             // PrintFormat("%s %d %d %d", __FUNCTION__, total_iterations, Volumes.AccountLimitOrders, DrawDeals.SizeCounter());
         }
@@ -474,10 +490,12 @@ class CTradeBuilder : public ITradeBuilder {
 
     void RemoveOrders() const {
         for (int i{OrdersTotal() - 1}; i >= 0; i--) {
-            ulong const order_ticket{OrderGetTicket(i)}, const magic_number{OrderGetInteger(ORDER_MAGIC)}, const order_type{OrderGetInteger(ORDER_TYPE)};
+            ulong const order_ticket{OrderGetTicket(i)};
+            ulong const magic_number{OrderGetInteger(ORDER_MAGIC)}, const order_type{OrderGetInteger(ORDER_TYPE)};
             // PrintFormat("%s %ld %ld %s %s", __FUNCTION__, magic_number, Magic.Number, EnumToString(ENUM_ORDER_TYPE(order_type)), EnumToString(ENUM_ORDER_TYPE(m_type)));
-            if (magic_number == Magic.Number && order_type == m_type) {
-                MqlTradeRequest const Request{TRADE_ACTION_REMOVE, magic_number, order_ticket, Symbol(), 0, 0, 0, 0, 0, 0, m_type, ORDER_FILLING_FOK, 0, 0, "set your systems volume control for slightly above the normal listening level", 0, 0};
+            // if (magic_number == Magic.Number && order_type == m_type) {
+            if (m_magic_number == magic_number) {
+                MqlTradeRequest const Request{TRADE_ACTION_REMOVE, m_magic_number, order_ticket, Symbol(), 0, 0, 0, 0, 0, 0, m_type, ORDER_FILLING_FOK, 0, 0, "set your systems volume control for slightly above the normal listening level", 0, 0};
                 Send(Request);
             }
         }
@@ -491,20 +509,26 @@ class CTradeBuilder : public ITradeBuilder {
             if (OrderSendAsync(request, Result)) {
                 // PrintFormat("OrderSend 1: retcode %u deal %llu order %llu volume %g price %g bid %g ask %g comment %s request_id %u retcode_external %u", Result.retcode, Result.deal, Result.order, Result.volume, Result.price, Result.bid, Result.ask, Result.comment, Result.request_id, Result.retcode_external);
             } else {
-                PrintFormat("OrderSend 2: retcode %u | deal %llu | order %llu | volume %g | price %g | bid %g | ask %g | comment %s | request_id %u | retcode_external %u", Result.retcode, Result.deal, Result.order, Result.volume, Result.price, Result.bid, Result.ask, Result.comment, Result.request_id, Result.retcode_external);
+                PrintFormat("OrderSend: retcode %u | deal %llu | order %llu | volume %g | price %g | bid %g | ask %g | comment %s | request_id %u | retcode_external %u", Result.retcode, Result.deal, Result.order, Result.volume, Result.price, Result.bid, Result.ask, Result.comment, Result.request_id, Result.retcode_external);
             }
         } else {
             PrintFormat("%s %f", __FUNCTION__, request.volume);
-            PrintFormat("OrderCheck 2: retcode %u | balance %g | equity %g | profit %g | margin %g | margin_free %g | margin_level %g | comment %s", Check.retcode, Check.balance, Check.equity, Check.profit, Check.margin, Check.margin_free, Check.margin_level, Check.comment);
+            PrintFormat("OrderCheck: retcode %u | balance %g | equity %g | profit %g | margin %g | margin_free %g | margin_level %g | comment %s", Check.retcode, Check.balance, Check.equity, Check.profit, Check.margin, Check.margin_free, Check.margin_level, Check.comment);
         }
     }
 
     bool orderExists() const {
         for (int i{OrdersTotal() - 1}; i >= 0; i--) {
-            OrderGetTicket(i);
-            if (Magic.Number == OrderGetInteger(ORDER_MAGIC) && m_type == OrderGetInteger(ORDER_TYPE)) {
+            ulong ticket = OrderGetTicket(i);
+            // PrintFormat("%s %d %u | %u %u | %u %u", __FUNCTION__, i, ticket, m_magic_number, OrderGetInteger(ORDER_MAGIC), m_type, OrderGetInteger(ORDER_TYPE));
+            //  if (Magic.Number == OrderGetInteger(ORDER_MAGIC) && m_type == OrderGetInteger(ORDER_TYPE)) {
+            if (m_magic_number == OrderGetInteger(ORDER_MAGIC)) {
                 return true;
             }
+            /*else {
+                return false;
+            }*/
+            // PrintFormat("%s %d yo", __FUNCTION__, i);
         }
 
         return false;

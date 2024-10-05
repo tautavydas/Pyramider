@@ -31,7 +31,7 @@ ulong tick_count_milliseconds{GetTickCount64() - cooloff_period};
 #include <Pyramider/Entities/MagicNumber.mqh>
 #include <Pyramider/Entities/Volumes.mqh>
 CVolumes const Volumes;
-CMagicNumber const Magic;
+// CMagicNumber const Magic;
 
 // #include <Pyramider/Objects/DrawButton.mqh>
 // #include <Pyramider/Objects/IDrawable.mqh>
@@ -140,6 +140,7 @@ void OnTick() {
     ChartRedraw();*/
     // PositionReporter.SetValue();
     BuilderManager.onTick();
+    // ChartRedraw();
 
     // if (Symbol() == "BTCUSD") {
     //     PositionsTotal();
