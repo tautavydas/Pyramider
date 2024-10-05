@@ -39,7 +39,7 @@ class CEditableCollection final {
           ValueDown(new CHashMap<string, CPair<ChangeButton<ParametersShifted>> *>) {
         uint const
             price_digits{uint(ceil(fabs(log10(Point() / (position_type == POSITION_TYPE_BUY ? SymbolInfoDouble(Symbol(), SYMBOL_BID) : SymbolInfoDouble(Symbol(), SYMBOL_ASK))))))},
-            volume_digits{uint(ceil(fabs(log10(Volumes.VolumeMin))))},
+            volume_digits{uint(ceil(fabs(log10(g_volumes.m_volume_min))))},
             notional_digits{3},
             restricted_digits{0};
 

@@ -42,7 +42,7 @@ class CTradeBuilder : public ITradeBuilder {
     // double m_quote_value;
     ENUM_ORDER_TYPE const m_type;
     int const m_direction;
-    ulong const m_magic_number;
+    // ulong const m_magic_number;
     bool m_reset_bool;
     // uint m_orders_count;
 
@@ -68,7 +68,7 @@ class CTradeBuilder : public ITradeBuilder {
           // m_quote_value(SymbolInfoDouble(Symbol(), m_quote_type)),
           m_type(position_type == POSITION_TYPE_BUY ? ORDER_TYPE_BUY_LIMIT : ORDER_TYPE_SELL_LIMIT),
           m_direction(position_type == POSITION_TYPE_BUY ? -1 : 1),
-          m_magic_number(position_type == POSITION_TYPE_BUY ? 666 : 667),
+          // m_magic_number(position_type == POSITION_TYPE_BUY ? 666 : 667),
           m_reset_bool(true) /*,
            m_orders_count(position_type == POSITION_TYPE_BUY ? 14 : 15)*/
     {}
@@ -355,16 +355,16 @@ class CTradeBuilder : public ITradeBuilder {
             price{PositionReporter.getStatus() ? MinMax.process(MinMax.process(PositionReporter.getPriceOpen(), SymbolInfoDouble(Symbol(), m_quote_type)), Price.getValue()) : Price.getValue()},
             volume{Volume.getValue()}, volume_total{volume + (PositionReporter.getStatus() ? PositionReporter.getVolume() : 0.0)},
             notional{price * volume}, notional_total{notional + (PositionReporter.getStatus() ? PositionReporter.getPriceOpen() * PositionReporter.getVolume() : 0.0)},
-            Margin{Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote_type)};
+            Margin{Converter.QuoteToDeposit(notional_total * g_contract / g_leverage, m_quote_type)};
 
         uint counter{0};
-        while (Margin * MarginCall < equity && /*volume_total < Volumes.VolumeLimit*/ (Volumes.VolumeLimit ? volume_total < Volumes.VolumeLimit : true) && counter < Volumes.AccountLimitOrders) {
+        while (Margin * g_margin_call < equity && /*volume_total < Volumes.VolumeLimit*/ (g_volumes.m_volume_limit ? volume_total < g_volumes.m_volume_limit : true) && counter < g_volumes.m_account_limit_orders) {
             price = fmax(0, MinMax.process(price * price_ratio, price + m_direction * Point()));
             notional *= notional_ratio;
-            volume = floor(notional / price / Volumes.VolumeStep) * Volumes.VolumeStep;
+            volume = fmax(floor(notional / price / g_volumes.m_volume_step) * g_volumes.m_volume_step, g_volumes.m_volume_step);
             volume_total += volume;
             notional_total += volume * price;
-            Margin += Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote_type);
+            Margin += Converter.QuoteToDeposit(notional_total * g_contract / g_leverage, m_quote_type);
             ++counter;  // + uint(volume / Volumes.VolumeMax);
         }
         // PrintFormat("%s equity %f margin %f profit %f volumeLimit %f limitOrders %d", __FUNCTION__, equity, margin, profit, Volumes.VolumeLimit, Volumes.AccountLimitOrders);
@@ -388,14 +388,15 @@ class CTradeBuilder : public ITradeBuilder {
                 price{PositionReporter.getStatus() ? MinMax.process(MinMax.process(PositionReporter.getPriceOpen(), SymbolInfoDouble(Symbol(), m_quote_type)), Price.getValue()) : Price.getValue()},
                 volume{Volume.getValue()}, volume_total{volume + (PositionReporter.getStatus() ? PositionReporter.getVolume() : 0.0)},
                 notional{price * volume}, notional_total{notional + (PositionReporter.getStatus() ? PositionReporter.getPriceOpen() * PositionReporter.getVolume() : 0.0)},
-                Margin{Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote_type)};
+                Margin{Converter.QuoteToDeposit(notional_total * g_contract / g_leverage, m_quote_type)};
             // PrintFormat("%s %f %f %f %f %f %f | %f", __FUNCTION__, price, volume, notional_total, Contract, Leverage, Margin, notional_total * Contract / Leverage);
             // PrintFormat("%s %f", __FUNCTION__, price);
             // PrintFormat("%s %f", __FUNCTION__, volume);
+            // PrintFormat("%s %u", __FUNCTION__, Volumes.AccountLimitOrders);
             DrawDeals.ResetCounter();
             DrawPositions.ResetCounter();
             DrawMarginCall.ResetCounter();
-            while (Margin * MarginCall < equity && /*volume_total < Volumes.VolumeLimit*/ (Volumes.VolumeLimit ? volume_total < Volumes.VolumeLimit : true) && fmax(DrawDeals.SizeCounter(), fmax(DrawPositions.SizeCounter(), DrawMarginCall.SizeCounter())) < Volumes.AccountLimitOrders) {
+            while (Margin * g_margin_call < equity && /*volume_total < Volumes.VolumeLimit*/ (g_volumes.m_volume_limit ? volume_total < g_volumes.m_volume_limit : true) && fmax(DrawDeals.SizeCounter(), fmax(DrawPositions.SizeCounter(), DrawMarginCall.SizeCounter())) < g_volumes.m_account_limit_orders) {
                 if (state_deals) {
                     double rest_volume{volume}, curr_volume{rest_volume};
 
@@ -403,8 +404,8 @@ class CTradeBuilder : public ITradeBuilder {
                     //  PrintFormat("%s %u %f", __FUNCTION__, DrawDeals.SizeCounter(), price_drop);
                     //  if (MinMax.process(PositionReporter.getPrice(), SymbolInfoDouble(Symbol(), m_quote))) {
                     //  PrintFormat("%s %f %f", __FUNCTION__, PositionReporter.getPrice(), SymbolInfoDouble(Symbol(), m_quote));
-                    for (uint i{0}, num_iter{uint(floor(volume / Volumes.VolumeMax))}; i <= num_iter; ++i) {
-                        curr_volume = Volumes.VolumeMax <= rest_volume ? Volumes.VolumeMax : rest_volume;
+                    for (uint i{0}, num_iter{uint(floor(volume / g_volumes.m_volume_max))}; i <= num_iter; ++i) {
+                        curr_volume = fmin(rest_volume, g_volumes.m_volume_max);  // g_volumes.m_volume_max <= rest_volume ? g_volumes.m_volume_max : rest_volume;
                         DrawDeals.Push(price, curr_volume);
                         // PrintFormat("%s %u %u", __FUNCTION__, i, DrawDeals.SizeCounter());
                         rest_volume -= curr_volume;
@@ -417,18 +418,19 @@ class CTradeBuilder : public ITradeBuilder {
                     DrawPositions.Push(notional_total / volume_total, volume_total);
                 }
                 if (state_margincall) {
-                    DrawMarginCall.Push(price + m_direction * Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote_type) / (Contract * volume), volume_total);
+                    DrawMarginCall.Push(price + m_direction * Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * g_margin_call, m_quote_type) / (g_contract * volume), volume_total);
                 }
 
                 price = fmax(0, MinMax.process(price * price_ratio, price + m_direction * Point()));
                 notional *= notional_ratio;
 
-                volume = fmax(floor(notional / price / Volumes.VolumeStep) * Volumes.VolumeStep, Volumes.VolumeStep);
+                volume = fmax(floor(notional / price / g_volumes.m_volume_step) * g_volumes.m_volume_step, g_volumes.m_volume_step);
                 volume_total += volume;
                 notional_total += volume * price;
-                Margin += Converter.QuoteToDeposit(notional_total * Contract / Leverage, m_quote_type);
+                Margin += Converter.QuoteToDeposit(notional_total * g_contract / g_leverage, m_quote_type);
                 // PrintFormat("%s %f %f %f %f | %s", __FUNCTION__, volume, volume_total, notional, notional_total, string(Margin * MarginCall < equity));
             }
+
             uint const restricted_deals{uint(RestrictedDeals.getValue())};
             DrawDeals.Drop(restricted_deals);
             DrawPositions.Drop(restricted_deals);
@@ -482,7 +484,7 @@ class CTradeBuilder : public ITradeBuilder {
                 MqlTradeRequest const Request{TRADE_ACTION_PENDING, Magic.Number, 0, Symbol(), curr_volume, DrawDeals.Levels[counter].m_price, 0, 0, 0, 0, m_type, ORDER_FILLING_FOK, 0, 0, DrawDeals.Name(counter), 0, 0};
                 Send(Request);
             }*/
-            MqlTradeRequest const Request{TRADE_ACTION_PENDING, m_magic_number, 0, Symbol(), DrawDeals.Levels[counter].m_volume, DrawDeals.Levels[counter].m_price, 0, 0, 0, 0, m_type, ORDER_FILLING_FOK, 0, 0, DrawDeals.Name(counter) + " " + (counter + 1 == DrawDeals.SizeCounter() ? "last" : "not last"), 0, 0};
+            MqlTradeRequest const Request{TRADE_ACTION_PENDING, g_magic.m_number, 0, Symbol(), DrawDeals.Levels[counter].m_volume, DrawDeals.Levels[counter].m_price, 0, 0, 0, 0, m_type, ORDER_FILLING_FOK, 0, 0, DrawDeals.Name(counter) + " " + (counter + 1 == DrawDeals.SizeCounter() ? "last" : "not last"), 0, 0};
             Send(Request);
             // PrintFormat("%s %d %d %d", __FUNCTION__, total_iterations, Volumes.AccountLimitOrders, DrawDeals.SizeCounter());
         }
@@ -493,9 +495,9 @@ class CTradeBuilder : public ITradeBuilder {
             ulong const order_ticket{OrderGetTicket(i)};
             ulong const magic_number{OrderGetInteger(ORDER_MAGIC)}, const order_type{OrderGetInteger(ORDER_TYPE)};
             // PrintFormat("%s %ld %ld %s %s", __FUNCTION__, magic_number, Magic.Number, EnumToString(ENUM_ORDER_TYPE(order_type)), EnumToString(ENUM_ORDER_TYPE(m_type)));
-            // if (magic_number == Magic.Number && order_type == m_type) {
-            if (m_magic_number == magic_number) {
-                MqlTradeRequest const Request{TRADE_ACTION_REMOVE, m_magic_number, order_ticket, Symbol(), 0, 0, 0, 0, 0, 0, m_type, ORDER_FILLING_FOK, 0, 0, "set your systems volume control for slightly above the normal listening level", 0, 0};
+            if (magic_number == g_magic.m_number && order_type == m_type) {
+                // if (m_magic_number == magic_number) {
+                MqlTradeRequest const Request{TRADE_ACTION_REMOVE, g_magic.m_number, order_ticket, Symbol(), 0, 0, 0, 0, 0, 0, m_type, ORDER_FILLING_FOK, 0, 0, "set your systems volume control for slightly above the normal listening level", 0, 0};
                 Send(Request);
             }
         }
@@ -521,8 +523,8 @@ class CTradeBuilder : public ITradeBuilder {
         for (int i{OrdersTotal() - 1}; i >= 0; i--) {
             ulong ticket = OrderGetTicket(i);
             // PrintFormat("%s %d %u | %u %u | %u %u", __FUNCTION__, i, ticket, m_magic_number, OrderGetInteger(ORDER_MAGIC), m_type, OrderGetInteger(ORDER_TYPE));
-            //  if (Magic.Number == OrderGetInteger(ORDER_MAGIC) && m_type == OrderGetInteger(ORDER_TYPE)) {
-            if (m_magic_number == OrderGetInteger(ORDER_MAGIC)) {
+            if (g_magic.m_number == OrderGetInteger(ORDER_MAGIC) && m_type == OrderGetInteger(ORDER_TYPE)) {
+                // if (m_magic_number == OrderGetInteger(ORDER_MAGIC)) {
                 return true;
             }
             /*else {

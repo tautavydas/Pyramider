@@ -22,16 +22,16 @@ input double  // PriceRatioLong = 1, PriceRatioShort = 1,
   void UpdateDigits() {}
 }; yo*/
 
-double const Contract{SymbolInfoDouble(Symbol(), SYMBOL_TRADE_CONTRACT_SIZE)}, const MarginCall{AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL) / 100};
-long const Leverage{AccountInfoInteger(ACCOUNT_LEVERAGE)};
-ulong const cooloff_period{1000};
-ulong tick_count_milliseconds{GetTickCount64() - cooloff_period};
+double const g_contract{SymbolInfoDouble(Symbol(), SYMBOL_TRADE_CONTRACT_SIZE)}, const g_margin_call{AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL) / 100.0};
+long const g_leverage{AccountInfoInteger(ACCOUNT_LEVERAGE)};
+ulong const g_cooloff_period{1000};
+ulong g_tick_count_milliseconds{GetTickCount64() - g_cooloff_period};
 
 #include <Pyramider/Entities/Converter.mqh>
 #include <Pyramider/Entities/MagicNumber.mqh>
 #include <Pyramider/Entities/Volumes.mqh>
-CVolumes const Volumes;
-// CMagicNumber const Magic;
+CVolumes const g_volumes;
+CMagicNumber const g_magic;
 
 // #include <Pyramider/Objects/DrawButton.mqh>
 // #include <Pyramider/Objects/IDrawable.mqh>
@@ -382,9 +382,9 @@ void OnChartEvent(int const id, long const &lparam, double const &dparam, string
         // BuilderManager.Draw();
         //  PeriodCollection.UpdateButton();
         //  PeriodCollection.Draw();
-        if (tick_count_milliseconds + cooloff_period <= GetTickCount64()) {
-            PrintFormat("%s %s %I64u", __FUNCTION__, EnumToString(ENUM_CHART_EVENT(id)), GetTickCount64() - tick_count_milliseconds);
-            tick_count_milliseconds = GetTickCount64();
+        if (g_tick_count_milliseconds + g_cooloff_period <= GetTickCount64()) {
+            PrintFormat("%s %s %I64u", __FUNCTION__, EnumToString(ENUM_CHART_EVENT(id)), GetTickCount64() - g_tick_count_milliseconds);
+            g_tick_count_milliseconds = GetTickCount64();
             // BuilderManager.UpdatePosition();
             BuilderManager.Draw();
             ChartRedraw();

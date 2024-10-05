@@ -124,7 +124,7 @@ class CPositionReporter final {
             double const zero{0};
             m_price_open = zero / zero;
             m_price_current = zero / zero;
-            m_volume = Volumes.VolumeMin;
+            m_volume = g_volumes.m_volume_min;
             // avg_volume = volume;
             m_profit = zero / zero;
             m_swap = zero / zero;
