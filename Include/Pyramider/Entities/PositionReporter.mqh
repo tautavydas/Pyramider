@@ -97,12 +97,12 @@ class CPositionReporter final {
             m_margin = AccountInfoDouble(ACCOUNT_MARGIN);
         }*/
 
+        m_balance = AccountInfoDouble(ACCOUNT_BALANCE);
+        m_equity = AccountInfoDouble(ACCOUNT_EQUITY);
+        m_margin = AccountInfoDouble(ACCOUNT_MARGIN);
+
         if (getStatus()) {
             m_status = true;
-
-            m_balance = AccountInfoDouble(ACCOUNT_BALANCE) / PositionsTotal();
-            m_equity = AccountInfoDouble(ACCOUNT_EQUITY) / PositionsTotal();
-            m_margin = AccountInfoDouble(ACCOUNT_MARGIN) / PositionsTotal();
 
             m_price_open = PositionGetDouble(POSITION_PRICE_OPEN);
             m_price_current = PositionGetDouble(POSITION_PRICE_CURRENT);
@@ -116,10 +116,6 @@ class CPositionReporter final {
             return EnumPositionType(PositionGetInteger(POSITION_TYPE));
         } else {
             m_status = false;
-
-            m_balance = AccountInfoDouble(ACCOUNT_BALANCE);
-            m_equity = AccountInfoDouble(ACCOUNT_EQUITY);
-            m_margin = AccountInfoDouble(ACCOUNT_MARGIN);
 
             double const zero{0};
             m_price_open = zero / zero;

@@ -20,7 +20,7 @@ class CBuilderManager final {
     //  int m_history_orders_total;
     // bool m_old_status;
     double m_volume;
-    bool m_initialized;
+    // bool m_initialized;
     uint /*m_orders_count,*/ m_orders_total;
     CProportionsManager *const ProportionsManager;
     CPeriodCollection *PeriodCollection;
@@ -35,7 +35,7 @@ class CBuilderManager final {
            // m_Yproportions(Yproportions),
            // m_old_status(PositionReporter.getStatus()),
            // m_volume(PositionGetDouble(POSITION_VOLUME)),
-          m_initialized(false),
+          // m_initialized(false),
           ProportionsManager(new CProportionsManager(periods.Size(), x_proportions, y_proportions)),
           PeriodCollection(new CPeriodCollection(ProportionsManager, periods)),
           LongBuilder(new CTradeBuilder<ExtremumMin>(ProportionsManager, PositionReporter, POSITION_TYPE_BUY)),

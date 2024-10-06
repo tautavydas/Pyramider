@@ -132,6 +132,7 @@ void OnDeinit(const int reason) {
     /*if (reason == REASON_REMOVE || reason == REASON_PROGRAM) {
       ChartIndicatorDelete(ChartID(), 1, ChartIndicatorName(ChartID(), 1, 0));
     }*/
+    Comment("");
 }
 
 void OnTick() {

@@ -71,7 +71,9 @@ class CTradeBuilder : public ITradeBuilder {
           // m_magic_number(position_type == POSITION_TYPE_BUY ? 666 : 667),
           m_reset_bool(true) /*,
            m_orders_count(position_type == POSITION_TYPE_BUY ? 14 : 15)*/
-    {}
+    {
+        // PrintFormat("%s %s %s", __FUNCTION__, SymbolInfoString(Symbol(), SYMBOL_CURRENCY_PROFIT), AccountInfoString(ACCOUNT_CURRENCY));
+    }
 
     ~CTradeBuilder() {
         delete Converter;
@@ -87,7 +89,7 @@ class CTradeBuilder : public ITradeBuilder {
     /*void cancelOrdersHide() const {
         CancelOrders.Hide();
     }*/
-
+   private:
     void UpdatePosition() override {
         PlaceOrders.UpdatePosition();
         CancelOrders.UpdatePosition();
@@ -158,6 +160,7 @@ class CTradeBuilder : public ITradeBuilder {
                 DrawMarginCall.Hide();
                 RestrictedDeals.Hide();
                 DrawPositions.Hide();
+                Comment("");
             }
             // DrawPositions.DrawKeepState();
 
@@ -343,28 +346,42 @@ class CTradeBuilder : public ITradeBuilder {
         return false;
     }
 
+    bool isMarginWithinLimit(double const margin, double const funds) const {
+        return margin * g_margin_call < funds;
+    }
+
+    bool isVolumeWithinLimit(double const volume_total) const {
+        return g_volumes.m_volume_limit ? volume_total < g_volumes.m_volume_limit : true;
+    }
+
+    bool isOrdersWithinLimit(uint const deals, uint const positions, uint const margin_calls) const {
+        return fmax(deals, fmax(positions, margin_calls)) < g_volumes.m_account_limit_orders;
+    }
+
+   public:
     uint calcLevels() const {
-        double const balance{PositionReporter.getBalance()},
-            equity{PositionReporter.getEquity()},
-            margin{PositionReporter.getMargin()},
-            profit{PositionReporter.getProfit()},
-            swap{PositionReporter.getSwap()},
-            price_ratio{PriceRatio.getValue()},
-            notional_ratio{NotionalRatio.getValue()};
+        double const  // balance{PositionReporter.getBalance()},
+                      // const equity{PositionReporter.getEquity()},
+            funds{fmin(PositionReporter.getBalance(), PositionReporter.getEquity())},
+            // margin{PositionReporter.getMargin()},
+            // profit{PositionReporter.getProfit()},
+            // swap{PositionReporter.getSwap()},
+            const price_ratio{PriceRatio.getValue()},
+            const notional_ratio{NotionalRatio.getValue()};
         double
             price{PositionReporter.getStatus() ? MinMax.process(MinMax.process(PositionReporter.getPriceOpen(), SymbolInfoDouble(Symbol(), m_quote_type)), Price.getValue()) : Price.getValue()},
             volume{Volume.getValue()}, volume_total{volume + (PositionReporter.getStatus() ? PositionReporter.getVolume() : 0.0)},
             notional{price * volume}, notional_total{notional + (PositionReporter.getStatus() ? PositionReporter.getPriceOpen() * PositionReporter.getVolume() : 0.0)},
-            Margin{Converter.QuoteToDeposit(notional_total * g_contract / g_leverage, m_quote_type)};
+            margin{Converter.QuoteToDeposit(notional * g_contract / g_leverage, m_quote_type) + (PositionReporter.getStatus() ? PositionReporter.getMargin() : 0.0)};
 
         uint counter{0};
-        while (Margin * g_margin_call < equity && /*volume_total < Volumes.VolumeLimit*/ (g_volumes.m_volume_limit ? volume_total < g_volumes.m_volume_limit : true) && counter < g_volumes.m_account_limit_orders) {
+        while (isMarginWithinLimit(margin, funds) && isVolumeWithinLimit(volume_total) && counter < g_volumes.m_account_limit_orders) {
             price = fmax(0, MinMax.process(price * price_ratio, price + m_direction * Point()));
             notional *= notional_ratio;
             volume = fmax(floor(notional / price / g_volumes.m_volume_step) * g_volumes.m_volume_step, g_volumes.m_volume_step);
             volume_total += volume;
             notional_total += volume * price;
-            Margin += Converter.QuoteToDeposit(notional_total * g_contract / g_leverage, m_quote_type);
+            margin = Converter.QuoteToDeposit(notional_total * g_contract / g_leverage, m_quote_type);
             ++counter;  // + uint(volume / Volumes.VolumeMax);
         }
         // PrintFormat("%s equity %f margin %f profit %f volumeLimit %f limitOrders %d", __FUNCTION__, equity, margin, profit, Volumes.VolumeLimit, Volumes.AccountLimitOrders);
@@ -373,32 +390,40 @@ class CTradeBuilder : public ITradeBuilder {
         return counter;
     }
 
+   private:
     void drawLevels() const {
         bool const state_deals{DrawDeals.State()}, const state_positions{DrawPositions.State()}, const state_margincall{DrawMarginCall.State()};
         if (state_deals || state_positions) {
-            double const balance{PositionReporter.getBalance()},
-                equity{PositionReporter.getEquity()},
-                margin{PositionReporter.getMargin()},
-                profit{PositionReporter.getProfit()},
-                swap{PositionReporter.getSwap()},
-                price_ratio{PriceRatio.getValue()},
-                notional_ratio{NotionalRatio.getValue()};
+            double  // const balance{PositionReporter.getBalance()},
+                    //  const equity{PositionReporter.getEquity()},
+                const funds{fmin(PositionReporter.getBalance(), PositionReporter.getEquity())},
+                // margin{PositionReporter.getMargin()},
+                // profit{PositionReporter.getProfit()},
+                // swap{PositionReporter.getSwap()},
+                const price_ratio{PriceRatio.getValue()},
+                const notional_ratio{NotionalRatio.getValue()};
             // PrintFormat("%s %s %f %f %f | %f", __FUNCTION__, string(PositionReporter.getStatus()), PositionReporter.getPriceOpen(), PositionReporter.getPriceCurrent(), Price.getValue(), SymbolInfoDouble(Symbol(), m_quote));
             double
                 price{PositionReporter.getStatus() ? MinMax.process(MinMax.process(PositionReporter.getPriceOpen(), SymbolInfoDouble(Symbol(), m_quote_type)), Price.getValue()) : Price.getValue()},
                 volume{Volume.getValue()}, volume_total{volume + (PositionReporter.getStatus() ? PositionReporter.getVolume() : 0.0)},
                 notional{price * volume}, notional_total{notional + (PositionReporter.getStatus() ? PositionReporter.getPriceOpen() * PositionReporter.getVolume() : 0.0)},
-                Margin{Converter.QuoteToDeposit(notional_total * g_contract / g_leverage, m_quote_type)};
+                margin{Converter.QuoteToDeposit(notional * g_contract / g_leverage, m_quote_type) + (PositionReporter.getStatus() ? PositionReporter.getMargin() : 0.0)};
+            // margin{PositionReporter.getMargin()};
             // PrintFormat("%s %f %f %f %f %f %f | %f", __FUNCTION__, price, volume, notional_total, Contract, Leverage, Margin, notional_total * Contract / Leverage);
             // PrintFormat("%s %f", __FUNCTION__, price);
             // PrintFormat("%s %f", __FUNCTION__, volume);
             // PrintFormat("%s %u", __FUNCTION__, Volumes.AccountLimitOrders);
+            // PrintFormat("%s %f %f", __FUNCTION__, margin, (volume_total - 0.01) * g_contract / g_leverage);
+            // PrintFormat("%s %f %f", __FUNCTION__, Converter.QuoteToDeposit(notional * g_contract / g_leverage, m_quote_type), Converter.QuoteToDeposit(notional_total * g_contract / g_leverage, m_quote_type));
+            // PrintFormat("%s %f %f", __FUNCTION__, Converter.QuoteToDeposit(notional * g_contract / g_leverage, m_quote_type) + (PositionReporter.getStatus() ? PositionReporter.getMargin() : 0.0),
+            //            Converter.QuoteToDeposit(notional_total * g_contract / g_leverage, m_quote_type));
+
             DrawDeals.ResetCounter();
             DrawPositions.ResetCounter();
             DrawMarginCall.ResetCounter();
-            while (Margin * g_margin_call < equity && /*volume_total < Volumes.VolumeLimit*/ (g_volumes.m_volume_limit ? volume_total < g_volumes.m_volume_limit : true) && fmax(DrawDeals.SizeCounter(), fmax(DrawPositions.SizeCounter(), DrawMarginCall.SizeCounter())) < g_volumes.m_account_limit_orders) {
+            while (isMarginWithinLimit(margin, funds) && isVolumeWithinLimit(volume_total) && isOrdersWithinLimit(DrawDeals.SizeCounter(), DrawPositions.SizeCounter(), DrawMarginCall.SizeCounter())) {
                 if (state_deals) {
-                    double rest_volume{volume}, curr_volume{rest_volume};
+                    double rest_volume{volume}, curr_volume{volume};
 
                     // double price_drop = Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * MarginCall, m_quote_type);
                     //  PrintFormat("%s %u %f", __FUNCTION__, DrawDeals.SizeCounter(), price_drop);
@@ -418,7 +443,7 @@ class CTradeBuilder : public ITradeBuilder {
                     DrawPositions.Push(notional_total / volume_total, volume_total);
                 }
                 if (state_margincall) {
-                    DrawMarginCall.Push(price + m_direction * Converter.DepositToQuote(fmin(AccountInfoDouble(ACCOUNT_EQUITY), AccountInfoDouble(ACCOUNT_BALANCE)) - AccountInfoDouble(ACCOUNT_MARGIN) * g_margin_call, m_quote_type) / (g_contract * volume), volume_total);
+                    DrawMarginCall.Push(price + m_direction * Converter.DepositToQuote(funds - margin * g_margin_call, m_quote_type) / (g_contract * volume), volume_total);
                 }
 
                 price = fmax(0, MinMax.process(price * price_ratio, price + m_direction * Point()));
@@ -427,9 +452,21 @@ class CTradeBuilder : public ITradeBuilder {
                 volume = fmax(floor(notional / price / g_volumes.m_volume_step) * g_volumes.m_volume_step, g_volumes.m_volume_step);
                 volume_total += volume;
                 notional_total += volume * price;
-                Margin += Converter.QuoteToDeposit(notional_total * g_contract / g_leverage, m_quote_type);
+                margin = Converter.QuoteToDeposit(notional_total * g_contract / g_leverage, m_quote_type);
                 // PrintFormat("%s %f %f %f %f | %s", __FUNCTION__, volume, volume_total, notional, notional_total, string(Margin * MarginCall < equity));
             }
+
+            string str{"Stopping conditions:\n"};
+            if (!isMarginWithinLimit(margin, funds)) {
+                str += StringFormat("Margin Call: %.2f * %.2f == %.2f >= %.2f\n", margin, g_margin_call, margin * g_margin_call, funds);
+            }
+            if (!isVolumeWithinLimit(volume_total)) {
+                str += StringFormat("Volume Limit: %f >= %f\n", volume_total, g_volumes.m_volume_limit);
+            }
+            if (!isOrdersWithinLimit(DrawDeals.SizeCounter(), DrawPositions.SizeCounter(), DrawMarginCall.SizeCounter())) {
+                str += StringFormat("Orders Limit: %u_%u_%u >= %u", DrawDeals.SizeCounter(), DrawPositions.SizeCounter(), DrawMarginCall.SizeCounter(), g_volumes.m_account_limit_orders);
+            }
+            Comment(str);
 
             uint const restricted_deals{uint(RestrictedDeals.getValue())};
             DrawDeals.Drop(restricted_deals);

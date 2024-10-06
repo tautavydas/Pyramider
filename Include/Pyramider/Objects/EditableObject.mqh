@@ -27,6 +27,7 @@ class CEditableObject final : public IDrawable {
           m_save_last_value(save_last_value) {}
 
     ~CEditableObject() {
+        Hide();
         delete Action;
         delete Params;
         delete ValueUp;
