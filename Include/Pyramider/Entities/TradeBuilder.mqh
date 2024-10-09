@@ -355,7 +355,7 @@ class CTradeBuilder : public ITradeBuilder {
     }
 
     bool isOrdersWithinLimit(uint const deals, uint const positions, uint const margin_calls) const {
-        return fmax(deals, fmax(positions, margin_calls)) < g_volumes.m_account_limit_orders;
+        return fmax(deals, fmax(positions, margin_calls)) + OrdersTotal() < g_volumes.m_account_limit_orders;
     }
 
    public:
@@ -375,7 +375,7 @@ class CTradeBuilder : public ITradeBuilder {
             margin{Converter.QuoteToDeposit(notional * g_contract / g_leverage, m_quote_type) + (PositionReporter.getStatus() ? PositionReporter.getMargin() : 0.0)};
 
         uint counter{0};
-        while (isMarginWithinLimit(margin, funds) && isVolumeWithinLimit(volume_total) && counter < g_volumes.m_account_limit_orders) {
+        while (isMarginWithinLimit(margin, funds) && isVolumeWithinLimit(volume_total) && counter + OrdersTotal() < g_volumes.m_account_limit_orders) {
             price = fmax(0, MinMax.process(price * price_ratio, price + m_direction * Point()));
             notional *= notional_ratio;
             volume = fmax(floor(notional / price / g_volumes.m_volume_step) * g_volumes.m_volume_step, g_volumes.m_volume_step);
