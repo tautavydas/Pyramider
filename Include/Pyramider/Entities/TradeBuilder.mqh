@@ -67,10 +67,10 @@ class CTradeBuilder : public ITradeBuilder {
           m_quote_type(position_type == POSITION_TYPE_BUY ? SYMBOL_ASK : SYMBOL_BID),
           // m_quote_value(SymbolInfoDouble(Symbol(), m_quote_type)),
           m_type(position_type == POSITION_TYPE_BUY ? ORDER_TYPE_BUY_LIMIT : ORDER_TYPE_SELL_LIMIT),
-          m_direction(position_type == POSITION_TYPE_BUY ? -1 : 1),
-          // m_magic_number(position_type == POSITION_TYPE_BUY ? 666 : 667),
-          m_reset_bool(true) /*,
-           m_orders_count(position_type == POSITION_TYPE_BUY ? 14 : 15)*/
+          m_direction(position_type == POSITION_TYPE_BUY ? -1 : 1)  //,
+    // m_magic_number(position_type == POSITION_TYPE_BUY ? 666 : 667),
+    // m_reset_bool(true),
+    // m_orders_count(position_type == POSITION_TYPE_BUY ? 14 : 15) * /
     {
         // PrintFormat("%s %s %s", __FUNCTION__, SymbolInfoString(Symbol(), SYMBOL_CURRENCY_PROFIT), AccountInfoString(ACCOUNT_CURRENCY));
     }
@@ -456,17 +456,23 @@ class CTradeBuilder : public ITradeBuilder {
                 // PrintFormat("%s %f %f %f %f | %s", __FUNCTION__, volume, volume_total, notional, notional_total, string(Margin * MarginCall < equity));
             }
 
-            string str{"Stopping conditions:\n"};
-            if (!isMarginWithinLimit(margin, funds)) {
-                str += StringFormat("Margin Call: %.2f * %.2f == %.2f >= %.2f\n", margin, g_margin_call, margin * g_margin_call, funds);
+            string valid_str{"Valid conditions:\n"}, stopping_str{"Stopping conditions:\n"};
+            if (isMarginWithinLimit(margin, funds)) {
+                valid_str += StringFormat("Margin Call: %.2f * %.2f == %.2f < %.2f\n", margin, g_margin_call, margin * g_margin_call, funds);
+            } else {
+                stopping_str += StringFormat("Margin Call: %.2f * %.2f == %.2f >= %.2f\n", margin, g_margin_call, margin * g_margin_call, funds);
             }
-            if (!isVolumeWithinLimit(volume_total)) {
-                str += StringFormat("Volume Limit: %f >= %f\n", volume_total, g_volumes.m_volume_limit);
+            if (isVolumeWithinLimit(volume_total)) {
+                valid_str += StringFormat("Volume Limit: %f < %s\n", volume_total, g_volumes.m_volume_limit ? StringFormat("%s", g_volumes.m_volume_limit) : "no limit");
+            } else {
+                stopping_str += StringFormat("Volume Limit: %f >= %s\n", volume_total, g_volumes.m_volume_limit ? StringFormat("%s", g_volumes.m_volume_limit) : "no limit");
             }
-            if (!isOrdersWithinLimit(DrawDeals.SizeCounter(), DrawPositions.SizeCounter(), DrawMarginCall.SizeCounter())) {
-                str += StringFormat("Orders Limit: %u_%u_%u >= %u", DrawDeals.SizeCounter(), DrawPositions.SizeCounter(), DrawMarginCall.SizeCounter(), g_volumes.m_account_limit_orders);
+            if (isOrdersWithinLimit(DrawDeals.SizeCounter(), DrawPositions.SizeCounter(), DrawMarginCall.SizeCounter())) {
+                valid_str += StringFormat("Orders Limit: %u_%u_%u < %u\n", DrawDeals.SizeCounter(), DrawPositions.SizeCounter(), DrawMarginCall.SizeCounter(), g_volumes.m_account_limit_orders);
+            } else {
+                stopping_str += StringFormat("Orders Limit: %u_%u_%u >= %u", DrawDeals.SizeCounter(), DrawPositions.SizeCounter(), DrawMarginCall.SizeCounter(), g_volumes.m_account_limit_orders);
             }
-            Comment(str);
+            Comment(valid_str + stopping_str);
 
             uint const restricted_deals{uint(RestrictedDeals.getValue())};
             DrawDeals.Drop(restricted_deals);

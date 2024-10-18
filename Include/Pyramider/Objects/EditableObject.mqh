@@ -13,9 +13,9 @@ class CEditableObject final : public IDrawable {
     ChangeButton<ParametersStandard> *const ValueUp;
     ChangeButton<ParametersShifted> *const ValueDown;
     uint const m_digits;
-    bool const m_save_last_value;
-    CEditableObject(CProportionsManager const &proportions_manager, IAction const &action, uint const coefX, ENUM_POSITION_TYPE const position_type, string const name_, uint const digits, bool const save_last_value)
-        : IDrawable(OBJ_EDIT, (position_type == POSITION_TYPE_BUY ? "Long" : "Short") + name_, name_, position_type == POSITION_TYPE_BUY ? clrBlue : clrRed, clrLightGray),
+    // bool const m_save_last_value;
+    CEditableObject(CProportionsManager const &proportions_manager, IAction const &action, uint const coefX, ENUM_POSITION_TYPE const position_type, string const name, uint const digits /*, bool const save_last_value*/)
+        : IDrawable(OBJ_EDIT, (position_type == POSITION_TYPE_BUY ? "Long" : "Short") + name, name, position_type == POSITION_TYPE_BUY ? clrBlue : clrRed, clrLightGray),
           m_border_color(clrGray),
           m_step(pow(10.0, -double(digits))),
           m_initialized(false),
@@ -23,8 +23,9 @@ class CEditableObject final : public IDrawable {
           Params(new Parameters(proportions_manager, coefX, position_type, 2, 1)),
           ValueUp(new ChangeButton<ParametersStandard>(proportions_manager, coefX, position_type, m_name)),
           ValueDown(new ChangeButton<ParametersShifted>(proportions_manager, coefX, position_type, m_name)),
-          m_digits(digits),
-          m_save_last_value(save_last_value) {}
+          m_digits(digits) /*,
+           m_save_last_value(save_last_value)*/
+    {}
 
     ~CEditableObject() {
         Hide();
@@ -49,29 +50,28 @@ class CEditableObject final : public IDrawable {
         ValueDown.DrawFresh();
 
         if (!m_initialized) {
-            if (m_save_last_value) {
-                string const file_name = StringFormat("%s_%s", Symbol(), m_name);
-                if (FileIsExist(file_name)) {
-                    int const file_handle = FileOpen(file_name, FILE_READ | FILE_BIN);
-                    if (file_handle != INVALID_HANDLE) {
-                        setValue(FileReadDouble(file_handle));
-                        FileClose(file_handle);
-                    } else {
-                        PrintFormat("Failed to open %s file for reading: %d", file_name, GetLastError());
-                    }
+            // if (m_save_last_value) {
+            string const file_name = StringFormat("%s_%s", Symbol(), m_name);
+            if (FileIsExist(file_name)) {
+                int const file_handle = FileOpen(file_name, FILE_READ | FILE_BIN);
+                if (file_handle != INVALID_HANDLE) {
+                    setValue(Action.clamp(FileReadDouble(file_handle)));
+                    FileClose(file_handle);
                 } else {
-                    setValue(Action.onInit());
+                    PrintFormat("Failed to open %s file for reading: %d", file_name, GetLastError());
                 }
             } else {
                 setValue(Action.onInit());
             }
-
+            /*} else {
+                setValue(Action.onInit());
+            }*/
             m_initialized = true;
         }
     }
 
     void Hide() {
-        if (m_initialized && m_save_last_value) {
+        if (m_initialized /* && m_save_last_value*/) {
             string const file_name = StringFormat("%s_%s", Symbol(), m_name);
             int const file_handle = FileOpen(file_name, FILE_WRITE | FILE_BIN);
             if (file_handle != INVALID_HANDLE) {
@@ -80,12 +80,12 @@ class CEditableObject final : public IDrawable {
             } else {
                 PrintFormat("Failed to open %s file for writing: %d", file_name, GetLastError());
             }
+            m_initialized = false;
         }
 
         IDrawable::Hide();
         ValueUp.Hide();
         ValueDown.Hide();
-        m_initialized = false;
     }
 
     double getValue() const {
