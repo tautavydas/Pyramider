@@ -1,8 +1,9 @@
 // ###<Experts/Pyramider.mq5>
 
 #include <Pyramider/Collections/PeriodCollection.mqh>
+#include <Pyramider/Entities/Converter.mqh>
 #include <Pyramider/Entities/PositionReporter.mqh>
-#include <Pyramider/Entities/ProportionsManager.mqh>
+// #include <Pyramider/Entities/ProportionsManager.mqh>
 #include <Pyramider/Entities/TradeBuilder.mqh>
 
 class ExtremumMin final {

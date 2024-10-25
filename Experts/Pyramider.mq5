@@ -1,9 +1,12 @@
 #property copyright "TJ Productions"
 #property link "https://www.mql5.com"
-#property version "6.66"
+#property version "420.666"
 
 // #resource "\\Indicators\\SubWindow.ex5"
 #include <Generic/HashMap.mqh>
+#include <Pyramider/Entities/BuilderManager.mqh>
+#include <Pyramider/Entities/MagicNumber.mqh>
+#include <Pyramider/Entities/Volumes.mqh>
 
 input double  // PriceRatioLong = 1, PriceRatioShort = 1,
               // NotionalRatioLong = 1,
@@ -14,37 +17,14 @@ input double  // PriceRatioLong = 1, PriceRatioShort = 1,
 // input uint PriceRatioDigits    = 3    , NotionalRatioDigits = 2;
 // input uint NotionalRatioDigits = 2;
 
-/*class CDigitManager final {
-  uint price_ratio_digits, notional_ratio_digits;
- public:
-  CDigitManager() : price_ratio_digits(PriceRatioDigits), notional_ratio_digits(NotionalRatioDigits) {}
-
-  void UpdateDigits() {}
-}; yo*/
-
 double const g_contract{SymbolInfoDouble(Symbol(), SYMBOL_TRADE_CONTRACT_SIZE)}, const g_margin_call{AccountInfoDouble(ACCOUNT_MARGIN_SO_CALL) / 100.0};
 long const g_leverage{AccountInfoInteger(ACCOUNT_LEVERAGE)};
 ulong const g_cooloff_period{1000};
 ulong g_tick_count_milliseconds{GetTickCount64() - g_cooloff_period};
 
-#include <Pyramider/Entities/Converter.mqh>
-#include <Pyramider/Entities/MagicNumber.mqh>
-#include <Pyramider/Entities/Volumes.mqh>
 CVolumes const g_volumes;
 CMagicNumber const g_magic;
 
-// #include <Pyramider/Objects/DrawButton.mqh>
-// #include <Pyramider/Objects/IDrawable.mqh>
-// #include <Pyramider/Objects/StateObject.mqh>
-// #include <Pyramider/Parameters.mqh>
-#include <Pyramider/Collections/PeriodCollection.mqh>
-#include <Pyramider/Entities/BuilderManager.mqh>
-#include <Pyramider/Entities/ProportionsManager.mqh>
-// CPeriodCollection PeriodCollection;
-// CProportionsManager ProportionsManager(PeriodCollection);
-
-// #include <Pyramider/Entities/PositionReporter.mqh>
-// CPositionReporter PositionReporter;
 ENUM_TIMEFRAMES const Periods[]{PERIOD_M1, PERIOD_M2, PERIOD_M3, PERIOD_M4, PERIOD_M5, PERIOD_M6, PERIOD_M10, PERIOD_M12, PERIOD_M15, PERIOD_M20, PERIOD_M30, PERIOD_H1, PERIOD_H2, PERIOD_H3, PERIOD_H4, PERIOD_H6, PERIOD_H8, PERIOD_H12, PERIOD_D1, PERIOD_W1, PERIOD_MN1};
 CBuilderManager BuilderManager(xProportions, yProportions, Periods);
 
@@ -396,119 +376,119 @@ void OnChartEvent(int const id, long const &lparam, double const &dparam, string
     // PrintFormat("1 %s | %s | %u | %u | %s", __FUNCTION__, EnumToString(ENUM_CHART_EVENT(id)), lparam, dparam, sparam);
 }
 
-typedef string (*PrtStringSpread)();
-string StringFloatSpread() { return StringFormat("%.*f", Digits(), SymbolInfoInteger(Symbol(), SYMBOL_SPREAD) * Point()); }
-string StringIntegerSpread() { return StringFormat("%u", SymbolInfoInteger(Symbol(), SYMBOL_SPREAD)); }
+// typedef string (*PrtStringSpread)();
+// string StringFloatSpread() { return StringFormat("%.*f", Digits(), SymbolInfoInteger(Symbol(), SYMBOL_SPREAD) * Point()); }
+// string StringIntegerSpread() { return StringFormat("%u", SymbolInfoInteger(Symbol(), SYMBOL_SPREAD)); }
 
-class CSpread final {
-   public:
-    PrtStringSpread String;
-    CSpread()
-    /*: String(SymbolInfoInteger(Symbol(), SYMBOL_SPREAD_FLOAT)?StringFloatSpread:StringIntegerSpread)*/ {
-        if (SymbolInfoInteger(Symbol(), SYMBOL_SPREAD_FLOAT))
-            String = StringFloatSpread;
-        else
-            String = StringIntegerSpread;
-    }
-};
+// class CSpread final {
+//    public:
+//     PrtStringSpread String;
+//     CSpread()
+//     /*: String(SymbolInfoInteger(Symbol(), SYMBOL_SPREAD_FLOAT)?StringFloatSpread:StringIntegerSpread)*/ {
+//         if (SymbolInfoInteger(Symbol(), SYMBOL_SPREAD_FLOAT))
+//             String = StringFloatSpread;
+//         else
+//             String = StringIntegerSpread;
+//     }
+// };
 
-class CAdministrative final {
-   private:
-    uint const last;
+// class CAdministrative final {
+//    private:
+//     uint const last;
 
-   public:
-    double Fee, RangeDiff[], Leverage[];
-    CAdministrative()
-        : last(ArrayResize(Leverage, ArrayResize(RangeDiff, 3) + 1)) {
-        // PrintFormat("%s %s %s", SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE), SymbolInfoString(Symbol(), SYMBOL_CURRENCY_PROFIT), SymbolInfoString(Symbol(), SYMBOL_CURRENCY_MARGIN));
-        // PrintFormat("%s: %s WTF", __FUNCTION__, EnumToString(ENUM_SYMBOL_SECTOR(SymbolInfoInteger(Symbol(), SYMBOL_SECTOR))));
+//    public:
+//     double Fee, RangeDiff[], Leverage[];
+//     CAdministrative()
+//         : last(ArrayResize(Leverage, ArrayResize(RangeDiff, 3) + 1)) {
+//         // PrintFormat("%s %s %s", SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE), SymbolInfoString(Symbol(), SYMBOL_CURRENCY_PROFIT), SymbolInfoString(Symbol(), SYMBOL_CURRENCY_MARGIN));
+//         // PrintFormat("%s: %s WTF", __FUNCTION__, EnumToString(ENUM_SYMBOL_SECTOR(SymbolInfoInteger(Symbol(), SYMBOL_SECTOR))));
 
-        if (SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE) == "BTC") {
-            Fee = 0.000035;
-            RangeDiff[0] = 500000;
-            RangeDiff[1] = 5000000 - 500000;
-            RangeDiff[2] = 10000000 - 5000000;
-            Leverage[0] = 1000;
-            Leverage[1] = 500;
-            Leverage[2] = 100;
-            Leverage[3] = 50;
-        } else if (SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE) == "BTC") {
-            Fee = 0.000750;
-            RangeDiff[0] = 50000;
-            RangeDiff[1] = 500000 - 50000;
-            RangeDiff[2] = 1000000 - 500000;
-            Leverage[0] = 100;
-            Leverage[1] = 50;
-            Leverage[2] = 25;
-            Leverage[3] = 10;
-        } else if (SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE) == "DOG") {
-            Fee = 0.000750;
-            RangeDiff[0] = 5000;
-            RangeDiff[1] = 50000 - 5000;
-            RangeDiff[2] = 100000 - 50000;
-            Leverage[0] = 100;
-            Leverage[1] = 50;
-            Leverage[2] = 25;
-            Leverage[3] = 10;
-        }
+//         if (SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE) == "BTC") {
+//             Fee = 0.000035;
+//             RangeDiff[0] = 500000;
+//             RangeDiff[1] = 5000000 - 500000;
+//             RangeDiff[2] = 10000000 - 5000000;
+//             Leverage[0] = 1000;
+//             Leverage[1] = 500;
+//             Leverage[2] = 100;
+//             Leverage[3] = 50;
+//         } else if (SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE) == "BTC") {
+//             Fee = 0.000750;
+//             RangeDiff[0] = 50000;
+//             RangeDiff[1] = 500000 - 50000;
+//             RangeDiff[2] = 1000000 - 500000;
+//             Leverage[0] = 100;
+//             Leverage[1] = 50;
+//             Leverage[2] = 25;
+//             Leverage[3] = 10;
+//         } else if (SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE) == "DOG") {
+//             Fee = 0.000750;
+//             RangeDiff[0] = 5000;
+//             RangeDiff[1] = 50000 - 5000;
+//             RangeDiff[2] = 100000 - 50000;
+//             Leverage[0] = 100;
+//             Leverage[1] = 50;
+//             Leverage[2] = 25;
+//             Leverage[3] = 10;
+//         }
 
-        /*switch(ENUM_SYMBOL_SECTOR(SymbolInfoInteger(Symbol(), SYMBOL_SECTOR))) {
-          case SECTOR_CURRENCY:
-            Fee=0.0000315;
-            RangeDiff[0]=500000;
-            RangeDiff[1]=5000000-500000;
-            RangeDiff[2]=10000000-5000000;
-            Leverage[0]=1000;
-            Leverage[1]=500;
-            Leverage[2]=100;
-            Leverage[3]=50;
-            break;
-          case SECTOR_CURRENCY_CRYPTO:
-            Fee=0.000750;
-            if(SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE)=="BTC") {
-              RangeDiff[0]=50000;
-              RangeDiff[1]=500000-50000;
-              RangeDiff[2]=1000000-500000;
-            } else {
-              RangeDiff[0]=5000;
-              RangeDiff[1]=50000-5000;
-              RangeDiff[2]=100000-50000;
-            }
-            Leverage[0]=100;
-            Leverage[1]=50;
-            Leverage[2]=25;
-            Leverage[3]=10;
-            break;
-          case SECTOR_UNDEFINED:
-            Fee=0.000750;
-            if(SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE)=="BTC") {
-              RangeDiff[0]=50000;
-              RangeDiff[1]=500000-50000;
-              RangeDiff[2]=1000000-500000;
-            } else {
-              RangeDiff[0]=5000;
-              RangeDiff[1]=50000-5000;
-              RangeDiff[2]=100000-50000;
-            }
-            Leverage[0]=100;
-            Leverage[1]=50;
-            Leverage[2]=25;
-            Leverage[3]=10;
-            break;
-          default: PrintFormat("%s: %s WTF", __FUNCTION__, EnumToString(ENUM_SYMBOL_SECTOR(SymbolInfoInteger(Symbol(), SYMBOL_SECTOR))));
-        }*/
-    }
+//         /*switch(ENUM_SYMBOL_SECTOR(SymbolInfoInteger(Symbol(), SYMBOL_SECTOR))) {
+//           case SECTOR_CURRENCY:
+//             Fee=0.0000315;
+//             RangeDiff[0]=500000;
+//             RangeDiff[1]=5000000-500000;
+//             RangeDiff[2]=10000000-5000000;
+//             Leverage[0]=1000;
+//             Leverage[1]=500;
+//             Leverage[2]=100;
+//             Leverage[3]=50;
+//             break;
+//           case SECTOR_CURRENCY_CRYPTO:
+//             Fee=0.000750;
+//             if(SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE)=="BTC") {
+//               RangeDiff[0]=50000;
+//               RangeDiff[1]=500000-50000;
+//               RangeDiff[2]=1000000-500000;
+//             } else {
+//               RangeDiff[0]=5000;
+//               RangeDiff[1]=50000-5000;
+//               RangeDiff[2]=100000-50000;
+//             }
+//             Leverage[0]=100;
+//             Leverage[1]=50;
+//             Leverage[2]=25;
+//             Leverage[3]=10;
+//             break;
+//           case SECTOR_UNDEFINED:
+//             Fee=0.000750;
+//             if(SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE)=="BTC") {
+//               RangeDiff[0]=50000;
+//               RangeDiff[1]=500000-50000;
+//               RangeDiff[2]=1000000-500000;
+//             } else {
+//               RangeDiff[0]=5000;
+//               RangeDiff[1]=50000-5000;
+//               RangeDiff[2]=100000-50000;
+//             }
+//             Leverage[0]=100;
+//             Leverage[1]=50;
+//             Leverage[2]=25;
+//             Leverage[3]=10;
+//             break;
+//           default: PrintFormat("%s: %s WTF", __FUNCTION__, EnumToString(ENUM_SYMBOL_SECTOR(SymbolInfoInteger(Symbol(), SYMBOL_SECTOR))));
+//         }*/
+//     }
 
-    double Margin(double const residual, uint const curr) const {
-        if (curr + 1 < last)
-            if (residual < RangeDiff[curr])
-                return residual / Leverage[curr];
-            else
-                return fmin(residual, RangeDiff[curr]) / Leverage[curr] + Margin(residual - RangeDiff[curr], curr + 1);
-        else
-            return residual / Leverage[curr];
-    }
-} const Administrative;
+//     double Margin(double const residual, uint const curr) const {
+//         if (curr + 1 < last)
+//             if (residual < RangeDiff[curr])
+//                 return residual / Leverage[curr];
+//             else
+//                 return fmin(residual, RangeDiff[curr]) / Leverage[curr] + Margin(residual - RangeDiff[curr], curr + 1);
+//         else
+//             return residual / Leverage[curr];
+//     }
+// } const Administrative;
 
 /*uint CalcLevels(double const balance_old, double const position_volume_old, double const position_price_old, double const deal_volume_old, double const deal_price_old, uint const start, uint const curr) {
   double const deal_price_new{deal_price_old*Settings.PriceRatio},

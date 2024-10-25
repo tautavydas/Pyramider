@@ -11,10 +11,12 @@ class ClampRestricted final : public IAction {
     double onInit() const override { return 0; }
     double onTick(double const val) const override { return val; }
     double clamp(double const val) const override {
-        uint const number_of_positions = TradeBuilder.calcLevels();
+        // uint const number_of_positions = TradeBuilder.calcLevels();
+        // int const number_of_positions = 113;
 
-        TradeBuilder.DrawPositions.setText(string(number_of_positions));
+        // TradeBuilder.DrawPositions.setText(string(number_of_positions));
 
-        return fmax(0, fmin(number_of_positions, val));
+        // return fmax(0, fmin(number_of_positions, val));
+        return fmax(0, fmin(TradeBuilder.calcLevels(), val));
     }
 };

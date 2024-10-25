@@ -61,18 +61,18 @@ class DrawButton final : public Stateful<Parameters> {
         ++m_counter;
     }
 
-    void Drop(uint const count) {
-        m_counter -= fmin(m_counter, count);
+    void Drop(uint const restricted_count) {
+        m_counter -= fmin(m_counter, restricted_count);
     }
 
     void DrawLines() {
-        if (m_state) {
-            for (uint cnt{0}; cnt < m_counter; ++cnt) {
-                DrawLine(cnt);
-            }
-            DeleteExcessLines();
-            setText(string(m_counter));
+        // if (m_state) {
+        for (uint cnt{0}; cnt < m_counter; ++cnt) {
+            DrawLine(cnt);
         }
+        DeleteExcessLines();
+        setText(string(m_counter));
+        // }
     }
 
     void DeleteLines() {
