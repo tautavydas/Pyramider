@@ -72,6 +72,7 @@ class DrawButton final : public Stateful<Parameters> {
         }
         DeleteExcessLines();
         setText(string(m_counter));
+        // PrintFormat("%s %u", __FUNCTION__, m_counter);
         // }
     }
 

@@ -354,8 +354,8 @@ class CTradeBuilder : public ITradeBuilder {
         return g_volumes.m_volume_limit ? volume_total < g_volumes.m_volume_limit : true;
     }
 
-    bool isOrdersWithinLimit(uint const deals, uint const positions, uint const margin_calls) const {
-        return fmax(deals, fmax(positions, margin_calls)) + OrdersTotal() < g_volumes.m_account_limit_orders;
+    bool isOrdersWithinLimit(uint const deals) const {
+        return deals + OrdersTotal() < g_volumes.m_account_limit_orders;
     }
 
    public:
@@ -421,7 +421,7 @@ class CTradeBuilder : public ITradeBuilder {
             DrawDeals.ResetCounter();
             DrawPositions.ResetCounter();
             DrawMarginCall.ResetCounter();
-            while (isMarginWithinLimit(margin, funds) && isVolumeWithinLimit(volume_total) && isOrdersWithinLimit(DrawDeals.SizeCounter(), DrawPositions.SizeCounter(), DrawMarginCall.SizeCounter())) {
+            while (isMarginWithinLimit(margin, funds) && isVolumeWithinLimit(volume_total) && isOrdersWithinLimit(DrawDeals.SizeCounter())) {
                 if (state_deals) {
                     double rest_volume{volume}, curr_volume{volume};
 
@@ -467,7 +467,7 @@ class CTradeBuilder : public ITradeBuilder {
             } else {
                 stopping_str += StringFormat("Volume Limit: %f >= %s\n", volume_total, g_volumes.m_volume_limit ? StringFormat("%s", g_volumes.m_volume_limit) : "no limit");
             }
-            if (isOrdersWithinLimit(DrawDeals.SizeCounter(), DrawPositions.SizeCounter(), DrawMarginCall.SizeCounter())) {
+            if (isOrdersWithinLimit(DrawDeals.SizeCounter())) {
                 valid_str += StringFormat("Orders Limit: %u_%u_%u < %u\n", DrawDeals.SizeCounter(), DrawPositions.SizeCounter(), DrawMarginCall.SizeCounter(), g_volumes.m_account_limit_orders);
             } else {
                 stopping_str += StringFormat("Orders Limit: %u_%u_%u >= %u", DrawDeals.SizeCounter(), DrawPositions.SizeCounter(), DrawMarginCall.SizeCounter(), g_volumes.m_account_limit_orders);

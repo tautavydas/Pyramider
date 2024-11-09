@@ -17,6 +17,9 @@ class ClampRestricted final : public IAction {
         // TradeBuilder.DrawPositions.setText(string(number_of_positions));
 
         // return fmax(0, fmin(number_of_positions, val));
+
+        // TradeBuilder.
+
         return fmax(0, fmin(TradeBuilder.calcLevels(), val));
     }
 };
