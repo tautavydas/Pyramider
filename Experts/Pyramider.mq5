@@ -78,26 +78,30 @@ int OnInit() {
     // PeriodCollection.UpdateButton();
     // ProportionsManager.UpdateProportions();
 
-    string str = "";
+    string str_print = "", str_alert = "";
     bool success = INIT_SUCCEEDED;
     if (!TerminalInfoInteger(TERMINAL_TRADE_ALLOWED)) {
-        str += StringFormat("%s %s ", EnumToString(TERMINAL_TRADE_ALLOWED), string(bool(TerminalInfoInteger(TERMINAL_TRADE_ALLOWED))));
+        str_print += StringFormat("%s %s\n", EnumToString(TERMINAL_TRADE_ALLOWED), string(bool(TerminalInfoInteger(TERMINAL_TRADE_ALLOWED))));
+        str_alert += "Terminal trading is not allowed\n";
         success = INIT_FAILED;
     }
 
     if (!AccountInfoInteger(ACCOUNT_TRADE_ALLOWED)) {
-        str += StringFormat("%s %s ", EnumToString(ACCOUNT_TRADE_ALLOWED), string(bool(AccountInfoInteger(ACCOUNT_TRADE_ALLOWED))));
+        str_print += StringFormat("%s %s\n", EnumToString(ACCOUNT_TRADE_ALLOWED), string(bool(AccountInfoInteger(ACCOUNT_TRADE_ALLOWED))));
+        str_alert += "Account trading is not allowed\n";
         success = INIT_FAILED;
     }
 
     if (AccountInfoInteger(ACCOUNT_MARGIN_MODE) != ACCOUNT_MARGIN_MODE_RETAIL_NETTING) {
-        str += EnumToString(ENUM_ACCOUNT_MARGIN_MODE(AccountInfoInteger(ACCOUNT_MARGIN_MODE)));
+        str_print += EnumToString(ENUM_ACCOUNT_MARGIN_MODE(AccountInfoInteger(ACCOUNT_MARGIN_MODE)));
+        str_alert += "Account Margin Mode should be netting";
         success = INIT_FAILED;
     }
 
     if (success == INIT_FAILED) {
         // ExpertRemove();
-        PrintFormat("%s %s", __FUNCTION__, str);
+        PrintFormat("%s %s", __FUNCTION__, str_print);
+        Alert(str_alert);
     }
 
     return success;
