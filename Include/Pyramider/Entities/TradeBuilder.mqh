@@ -60,8 +60,8 @@ class CTradeBuilder : public ITradeBuilder {
           RestrictedDeals(EditableCollection[4]),
           DrawDeals(new DrawButton(proportions_manager, 0, position_type, "Deals", Volume.m_digits)),
           DrawPositions(new DrawButton(proportions_manager, 14, position_type, "Positions", Volume.m_digits)),
-          DrawMarginCall(new DrawButton(proportions_manager, 19, position_type, "MarginCall", 3)),
-          PlaceOrders(new ActionButton(proportions_manager, 21, position_type, "Limit")),
+          DrawMarginCall(new DrawButton(proportions_manager, 19, position_type, "MarginCalls", 3)),
+          PlaceOrders(new ActionButton(proportions_manager, 21, position_type, "Submit")),
           CancelOrders(new ActionButton(proportions_manager, 21, position_type, "Cancel")),
           // DisplayText(new CTextObject(proportions_manager, 8, position_type, "Display", Volume.m_digits)),
           m_quote_type(position_type == POSITION_TYPE_BUY ? SYMBOL_ASK : SYMBOL_BID),
@@ -472,7 +472,7 @@ class CTradeBuilder : public ITradeBuilder {
             } else {
                 stopping_str += StringFormat("Orders Limit: %u_%u_%u >= %u", DrawDeals.SizeCounter(), DrawPositions.SizeCounter(), DrawMarginCall.SizeCounter(), g_volumes.m_account_limit_orders);
             }
-            Comment(valid_str + stopping_str);
+            // Comment(valid_str + stopping_str);
 
             uint const restricted_deals{uint(RestrictedDeals.getValue())};
             DrawDeals.Drop(restricted_deals);
